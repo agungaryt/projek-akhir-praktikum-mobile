@@ -92,6 +92,32 @@ class WeatherData {
     );
   }
 
+  WeatherData copyWith({String? locationName}) {
+    return WeatherData(
+      temperature: temperature,
+      feelsLike: feelsLike,
+      tempMin: tempMin,
+      tempMax: tempMax,
+      humidity: humidity,
+      windSpeed: windSpeed,
+      pressure: pressure,
+      visibility: visibility,
+      condition: condition,
+      description: description,
+      icon: icon,
+      isStormWarning: isStormWarning,
+      lastUpdated: lastUpdated,
+      stationTime: stationTime,
+      locationName: locationName ?? this.locationName,
+      latitude: latitude,
+      longitude: longitude,
+      clouds: clouds,
+      rain1h: rain1h,
+      sunrise: sunrise,
+      sunset: sunset,
+    );
+  }
+
   /// Translate weather main condition to Indonesian
   static String _translateCondition(String condition) {
     switch (condition.toLowerCase()) {
@@ -319,8 +345,9 @@ class WeatherService {
 
   /// Get current weather for a specific named location
   Future<WeatherData> getWeatherByCity(String cityName) async {
+    final cleanName = cityName.trim();
     final url = Uri.parse(
-      '$_baseUrl/weather?q=$cityName&appid=$_apiKey&units=metric&lang=id',
+      '$_baseUrl/weather?q=${Uri.encodeComponent(cleanName)}&appid=$_apiKey&units=metric&lang=id',
     );
 
     final response = await http.get(url).timeout(
@@ -332,6 +359,20 @@ class WeatherService {
       final data = json.decode(response.body);
       return WeatherData.fromJson(data);
     } else if (response.statusCode == 404) {
+      // Coba hapus prefiks kota/kabupaten/gunung jika ada
+      final stripped = cleanName
+          .replaceFirst(RegExp(r'^(kota|kabupaten|kab\.|kecamatan|gunung|gn\.)\s+', caseSensitive: false), '')
+          .trim();
+      if (stripped.isNotEmpty && stripped != cleanName) {
+        final retryUrl = Uri.parse(
+          '$_baseUrl/weather?q=${Uri.encodeComponent(stripped)}&appid=$_apiKey&units=metric&lang=id',
+        );
+        final retryRes = await http.get(retryUrl).timeout(const Duration(seconds: 10));
+        if (retryRes.statusCode == 200) {
+          final data = json.decode(retryRes.body);
+          return WeatherData.fromJson(data);
+        }
+      }
       throw Exception('Lokasi "$cityName" tidak ditemukan.');
     } else {
       throw Exception('Gagal memuat data cuaca (${response.statusCode}).');
@@ -340,8 +381,9 @@ class WeatherService {
 
   /// Get forecast for a specific named location
   Future<List<WeatherForecast>> getForecastByCity(String cityName) async {
+    final cleanName = cityName.trim();
     final url = Uri.parse(
-      '$_baseUrl/forecast?q=$cityName&appid=$_apiKey&units=metric&lang=id',
+      '$_baseUrl/forecast?q=${Uri.encodeComponent(cleanName)}&appid=$_apiKey&units=metric&lang=id',
     );
 
     final response = await http.get(url).timeout(
@@ -352,6 +394,21 @@ class WeatherService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return _parseForecast(data);
+    } else if (response.statusCode == 404) {
+      final stripped = cleanName
+          .replaceFirst(RegExp(r'^(kota|kabupaten|kab\.|kecamatan|gunung|gn\.)\s+', caseSensitive: false), '')
+          .trim();
+      if (stripped.isNotEmpty && stripped != cleanName) {
+        final retryUrl = Uri.parse(
+          '$_baseUrl/forecast?q=${Uri.encodeComponent(stripped)}&appid=$_apiKey&units=metric&lang=id',
+        );
+        final retryRes = await http.get(retryUrl).timeout(const Duration(seconds: 10));
+        if (retryRes.statusCode == 200) {
+          final data = json.decode(retryRes.body);
+          return _parseForecast(data);
+        }
+      }
+      throw Exception('Gagal memuat prakiraan untuk "$cityName".');
     } else {
       throw Exception('Gagal memuat prakiraan untuk "$cityName".');
     }
@@ -493,8 +550,9 @@ class WeatherService {
 
   /// Get hourly forecast by city name
   Future<List<HourlyForecast>> getHourlyForecastByCity(String cityName) async {
+    final cleanName = cityName.trim();
     final url = Uri.parse(
-      '$_baseUrl/forecast?q=$cityName&appid=$_apiKey&units=metric&lang=id',
+      '$_baseUrl/forecast?q=${Uri.encodeComponent(cleanName)}&appid=$_apiKey&units=metric&lang=id',
     );
 
     try {
@@ -502,6 +560,20 @@ class WeatherService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return _parseHourlyForecast(data);
+      } else if (response.statusCode == 404) {
+        final stripped = cleanName
+            .replaceFirst(RegExp(r'^(kota|kabupaten|kab\.|kecamatan|gunung|gn\.)\s+', caseSensitive: false), '')
+            .trim();
+        if (stripped.isNotEmpty && stripped != cleanName) {
+          final retryUrl = Uri.parse(
+            '$_baseUrl/forecast?q=${Uri.encodeComponent(stripped)}&appid=$_apiKey&units=metric&lang=id',
+          );
+          final retryRes = await http.get(retryUrl).timeout(const Duration(seconds: 10));
+          if (retryRes.statusCode == 200) {
+            final data = json.decode(retryRes.body);
+            return _parseHourlyForecast(data);
+          }
+        }
       }
     } catch (_) {}
 

@@ -383,6 +383,7 @@ class _LoginScreenState extends State<LoginScreen>
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: Validators.email,
+                            // fillColor: const Color(0xFFEFF6FF),
                           ),
                           CustomTextField(
                             controller: _passwordCtrl,
@@ -391,6 +392,7 @@ class _LoginScreenState extends State<LoginScreen>
                             prefixIcon: Icons.lock_outline_rounded,
                             isPassword: true,
                             validator: Validators.password,
+                            // fillColor: const Color(0xFFF0FDF4),
                           ),
 
                           // Remember Me checkbox

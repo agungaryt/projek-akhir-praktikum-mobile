@@ -18,6 +18,7 @@ class CustomTextField extends StatefulWidget {
   final bool enabled;
   final void Function(String)? onChanged;
   final double borderRadius;
+  final Color? fillColor;
 
   const CustomTextField({
     super.key,
@@ -32,6 +33,7 @@ class CustomTextField extends StatefulWidget {
     this.enabled = true,
     this.onChanged,
     this.borderRadius = 12.0,
+    this.fillColor,
   });
 
   @override
@@ -63,7 +65,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
             decoration: InputDecoration(
               filled: true,
-              fillColor: AppTheme.surface,
+              fillColor: widget.fillColor ?? AppTheme.surface,
               labelText: widget.label,
               labelStyle: GoogleFonts.plusJakartaSans(
                 color: AppTheme.textSecondary,

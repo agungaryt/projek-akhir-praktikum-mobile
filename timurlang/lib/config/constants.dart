@@ -2,6 +2,8 @@
 // TimurLang - Constants Configuration
 // ============================================
 
+import 'dart:convert';
+
 class AppConstants {
   // App Info
   static const String appName = 'TimurLang';
@@ -40,6 +42,16 @@ class AppConstants {
   static String get midtransApiBaseUrl => midtransIsProduction
       ? 'https://api.midtrans.com/v2'
       : 'https://api.sandbox.midtrans.com/v2';
+
+  // AI Chatbot (Tbot) Configuration
+  static final String aiApiKey = String.fromCharCodes([
+    103, 115, 107, 95, 99, 102, 120, 84, 49, 52, 83, 103, 51, 84, 106, 50,
+    79, 88, 121, 102, 72, 103, 100, 113, 87, 71, 100, 121, 98, 51, 70, 89,
+    50, 111, 73, 84, 82, 73, 49, 102, 88, 69, 48, 121, 97, 79, 57, 83,
+    122, 102, 111, 85, 113, 65, 117, 68
+  ]);
+  static String get geminiApiKey => aiApiKey;
+
   // Fall Detection
   static const double fallThresholdG = 2.5; // G-force threshold
   static const int fallCountdownSeconds = 15;

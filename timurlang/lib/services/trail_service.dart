@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/mountain.dart';
 import '../models/basecamp_post.dart';
+import '../data/real_trail_data.dart';
 
 class TrailCheckpoint {
   final String name;
@@ -148,7 +149,16 @@ class TrailService {
 
       // Tentukan koordinat basecamp di lereng gunung dengan jaminan batas geodetis
       final bcCoord = _getBasecampCoordinate(bc, mountain, i, mountainBasecamps.length);
-      final waypoints = _generateProceduralTrail(bcCoord, summit, i);
+      
+      // Ambil jalur riil OpenStreetMap jika tersedia, fallback ke rute procedural
+      final realWaypoints = RealTrailData.getRealTrail(mountain.namaGunung, bc.namaPos);
+      final waypoints = realWaypoints ?? _generateProceduralTrail(bcCoord, summit, i);
+
+      final realCheckpoints = RealTrailData.getRealCheckpoints(mountain.namaGunung, bc.namaPos);
+      final checkpoints = realCheckpoints ??
+          ((bc.checkpointsJson != null && bc.checkpointsJson!.trim().isNotEmpty)
+              ? _parseCustomCheckpoints(bc.checkpointsJson!, waypoints, mountain.elevasiMdpl)
+              : _generateCheckpointsFromWaypoints(bc.namaPos, waypoints, mountain.elevasiMdpl));
 
       final trail = HikingTrail(
         id: 'trail-${bc.id}',
@@ -160,9 +170,7 @@ class TrailService {
         basecampLocation: bcCoord,
         summitLocation: summit,
         waypoints: waypoints,
-        checkpoints: (bc.checkpointsJson != null && bc.checkpointsJson!.trim().isNotEmpty)
-            ? _parseCustomCheckpoints(bc.checkpointsJson!, waypoints, mountain.elevasiMdpl)
-            : _generateCheckpointsFromWaypoints(bc.namaPos, waypoints, mountain.elevasiMdpl),
+        checkpoints: checkpoints,
         distanceKm: _calculateTrailDistance(waypoints),
         estimatedHours: max(3, (mountain.elevasiMdpl / 550).round()),
         statusJalur: bc.statusJalur,
@@ -266,10 +274,10 @@ class TrailService {
     'bc-049': LatLng(-7.2150, 109.9110), // Kalilembu Wonosobo
     'bc-050': LatLng(-7.2090, 109.9050), // Dieng Wonosobo
 
-    // 21. Gunung Andong (mtn-021)
-    'bc-051': LatLng(-7.3948, 110.3693), // Sawit Magelang (Dusun Sawit, Girirejo)
-    'bc-052': LatLng(-7.3831, 110.3719), // Gogik Magelang (Dusun Gogik, Girirejo)
-    'bc-053': LatLng(-7.3968, 110.3585), // Pendem Magelang (Dusun Pendem, Girirejo)
+    // 21. Gunung Andong (mtn-021) - Koordinat Real OSM
+    'bc-051': LatLng(-7.393157, 110.37616), // Sawit Magelang (Dusun Sawit, Girirejo)
+    'bc-052': LatLng(-7.387603, 110.382306), // Gogik Magelang (Dusun Gogik, Girirejo)
+    'bc-053': LatLng(-7.380133, 110.358086), // Pendem Magelang (Dusun Pendem, Girirejo)
 
     // 22. Gunung Slamet (mtn-022)
     'bc-054': LatLng(-7.2420, 109.2620), // Bambangan Purbalingga
@@ -441,11 +449,11 @@ class TrailService {
     final mLower = mountainName.toLowerCase();
     final bcLower = bcName.toLowerCase();
 
-    // ── GUNUNG ANDONG (Jawa Tengah - Summit: -7.3872, 110.3644) ──
+    // ── GUNUNG ANDONG (Jawa Tengah - Summit: -7.388669, 110.371555) ──
     if (mLower.contains('andong')) {
-      if (bcLower.contains('sawit')) return const LatLng(-7.3948, 110.3693);
-      if (bcLower.contains('pendem')) return const LatLng(-7.3968, 110.3585);
-      if (bcLower.contains('gogik')) return const LatLng(-7.3831, 110.3719);
+      if (bcLower.contains('sawit')) return const LatLng(-7.393157, 110.37616);
+      if (bcLower.contains('pendem')) return const LatLng(-7.380133, 110.358086);
+      if (bcLower.contains('gogik')) return const LatLng(-7.387603, 110.382306);
       if (bcLower.contains('sekararum') || bcLower.contains('sekar')) return const LatLng(-7.3980, 110.3640);
     }
 

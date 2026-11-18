@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/constants.dart';
 
 class ChatMessage {
   final String text;
@@ -29,38 +30,127 @@ class GeminiService {
   final List<ChatMessage> _history = [];
   List<ChatMessage> get history => List.unmodifiable(_history);
 
-  // Gemini API Key (dapat diset via --dart-define=GEMINI_API_KEY=your_key)
-  static final String _defaultGeminiKey = utf8.decode(
-    base64.decode('QVEuQWI4Uk42TDRfeGR5aUVjcFFFdFdITW9Mdzh4MWdRel9IdEx3azFmMmNNU3NDYWJwS3c='),
-  );
+  String? _customApiKey;
 
-  static String get _geminiApiKey {
-    const envKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+  String get currentApiKey {
+    if (_customApiKey != null && _customApiKey!.trim().isNotEmpty) {
+      final k = _customApiKey!.trim();
+      if (k.startsWith('gsk_') || k.startsWith('AIzaSy')) {
+        return k;
+      }
+    }
+    const envKey = String.fromEnvironment('AI_API_KEY', defaultValue: '');
     if (envKey.isNotEmpty) return envKey;
-    return _defaultGeminiKey;
+    if (AppConstants.aiApiKey.trim().isNotEmpty && !AppConstants.aiApiKey.startsWith('AQ.')) {
+      return AppConstants.aiApiKey.trim();
+    }
+    return '';
   }
+
+  bool get isGroq => currentApiKey.startsWith('gsk_');
+  bool get isGemini => currentApiKey.startsWith('AIzaSy');
+  bool get hasValidApiKey => currentApiKey.isNotEmpty;
+  String get activeProviderName => isGroq ? 'Groq Cloud AI' : (isGemini ? 'Gemini Cloud AI' : 'Cloud AI');
 
   Future<void> initialize() async {
-    // Bersihkan residu pengaturan API key lama dari penyimpanan lokal jika ada
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('custom_gemini_api_key');
-    } catch (_) {}
+      _customApiKey = prefs.getString('custom_gemini_api_key');
+      // Bersihkan key lama yang rusak/invalid dari SharedPreferences
+      if (_customApiKey != null &&
+          !_customApiKey!.startsWith('gsk_') &&
+          !_customApiKey!.startsWith('AIzaSy')) {
+        debugPrint('[GeminiService] Menghapus stored key invalid: $_customApiKey');
+        _customApiKey = null;
+        await prefs.remove('custom_gemini_api_key');
+      }
+      debugPrint('[GeminiService] Init selesai. hasValidApiKey=$hasValidApiKey, provider=$activeProviderName, keyPrefix=${currentApiKey.isNotEmpty ? currentApiKey.substring(0, 8) : "KOSONG"}');
+    } catch (e) {
+      debugPrint('[GeminiService] Error loading custom API key: $e');
+    }
   }
 
-  /// Tambah pesan sambutan awal tanpa membuat pesan palsu dari user
+  Future<void> setCustomApiKey(String key) async {
+    _customApiKey = key.trim().replaceAll("'", "").replaceAll('"', '').replaceAll('`', '').replaceAll(' ', '');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_customApiKey!.isEmpty) {
+        await prefs.remove('custom_gemini_api_key');
+      } else {
+        await prefs.setString('custom_gemini_api_key', _customApiKey!);
+      }
+    } catch (e) {
+      debugPrint('[GeminiService] Error saving custom API key: $e');
+    }
+  }
+
+  /// Tes koneksi API Key secara live ke Groq atau Gemini
+  Future<bool> testApiKey(String key) async {
+    final cleanKey = key.trim().replaceAll("'", "").replaceAll('"', '').replaceAll('`', '').replaceAll(' ', '');
+    if (cleanKey.isEmpty) return false;
+
+    // Tes Groq API jika key berawalan gsk_
+    if (cleanKey.startsWith('gsk_')) {
+      try {
+        final url = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
+        final res = await http.post(
+          url,
+          headers: {
+            'Authorization': 'Bearer $cleanKey',
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'model': 'qwen/qwen3.8-27b',
+            'messages': [
+              {'role': 'user', 'content': 'ping'}
+            ],
+            'max_tokens': 5,
+          }),
+        ).timeout(const Duration(seconds: 10));
+        return res.statusCode == 200;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    // Default: Tes Google Gemini API
+    try {
+      final url = Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$cleanKey',
+      );
+      final res = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'contents': [
+            {
+              'role': 'user',
+              'parts': [
+                {'text': 'ping'}
+              ]
+            }
+          ]
+        }),
+      ).timeout(const Duration(seconds: 10));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Tambah pesan sambutan awal berfokus khusus pada pendakian
   void addGreeting() {
     if (_history.isEmpty) {
       _history.add(
         ChatMessage(
-          text: 'Halo! Saya Tbot, asisten cerdas dari TimurLang.\n\n'
-              'Saya siap membantu Anda menjawab berbagai hal seputar pendakian maupun topik umum:\n'
-              '• Rekomendasi gunung, estimasi jalur, & pos perizinan\n'
-              '• Prakiraan cuaca, suhu, & fenomena alam\n'
-              '• Pertolongan Pertama (P3K) & tips keselamatan pendakian\n'
-              '• Panduan fitur aplikasi TimurLang & Simaksi\n'
-              '• Pengetahuan umum, sains, & persiapan outdoor\n\n'
-              'Apa yang ingin Anda tanyakan atau diskusikan hari ini?',
+          text: 'Halo! Saya Tbot, asisten AI resmi pendakian dari TimurLang.\n\n'
+              'Saya siap membantu Anda seputar persiapan, informasi jalur, dan keselamatan pendakian:\n'
+              '• Rekomendasi gunung & informasi jalur pendakian\n'
+              '• Tips perlengkapan, checklist packing, & logistik\n'
+              '• Prakiraan cuaca gunung & pemahaman fenomena alam\n'
+              '• Pertolongan Pertama (P3K) & penanganan darurat (Hipotermia/AMS)\n'
+              '• Panduan fitur aplikasi TimurLang & perizinan Simaksi\n\n'
+              'Ada yang ingin Anda tanyakan seputar rencana pendakian Anda?',
           isUser: false,
           timestamp: DateTime.now(),
           isFromCloud: true,
@@ -77,15 +167,26 @@ class GeminiService {
     String response;
     bool isCloud = false;
 
-    // Hubungi Google Gemini API menggunakan kunci terpasang
-    try {
-      response = await _callGeminiApi(message);
-      isCloud = true;
-    } catch (e) {
-      debugPrint('[GeminiService] Cloud API gagal: $e');
-      // Fallback ke Universal Intelligence Engine lokal jika offline / request gagal
+    // Hubungi Cloud AI (Groq API atau Google Gemini API)
+    if (!hasValidApiKey) {
+      debugPrint('[GeminiService] Tidak ada API key valid → langsung offline');
       response = _generateUniversalResponse(message);
       isCloud = false;
+    } else {
+      try {
+        debugPrint('[GeminiService] Memanggil $activeProviderName (key=${currentApiKey.substring(0, 8)}...)');
+        if (isGroq) {
+          response = await _callGroqApi(message);
+        } else {
+          response = await _callGeminiApi(message);
+        }
+        isCloud = true;
+        debugPrint('[GeminiService] ✅ Cloud AI berhasil menjawab');
+      } catch (e) {
+        debugPrint('[GeminiService] ❌ Cloud API ($activeProviderName) gagal: $e');
+        response = _generateUniversalResponse(message);
+        isCloud = false;
+      }
     }
 
     _history.add(ChatMessage(
@@ -97,16 +198,102 @@ class GeminiService {
     return response;
   }
 
+  /// Call Groq OpenAI-compatible Chat Completions API
+  Future<String> _callGroqApi(String message) async {
+    final key = currentApiKey;
+    if (key.isEmpty) {
+      throw Exception('Groq API Key belum disetel.');
+    }
+
+    // Model aktif terbaru di Groq (Nov 2026)
+    const candidateModels = [
+      'qwen/qwen3.8-27b',
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b',
+    ];
+
+    // Bangun daftar percakapan standar OpenAI
+    final List<Map<String, String>> messages = [
+      {
+        'role': 'system',
+        'content': 'Kamu adalah Tbot, asisten AI resmi TimurLang. Kamu adalah pakar pendakian gunung, keselamatan di alam bebas, perlengkapan outdoor, navigasi alam, dan sistem perizinan Simaksi di Indonesia.\n\n'
+            'PANDUAN PERILAKU:\n'
+            '1. Jawab setiap pertanyaan seputar gunung, alam bebas, cuaca, perlengkapan, dan pendakian secara mendalam, cerdas, akurat, dan mengalir natural (BUKAN jawaban template).\n'
+            '2. Gunakan gaya bahasa yang ramah, santun, hangat, dan terstruktur rapi (gunakan poin-poin tebal markdown jika menjelaskan banyak hal).\n'
+            '3. Selalu utamakan keselamatan (safety first) dan prinsip kelestarian alam (Leave No Trace).\n'
+            '4. Jika pengguna bertanya hal di luar alam bebas atau pendakian, tolak dengan santun dan ramah lalu ajak berdiskusi seputar rencana mendaki.',
+      }
+    ];
+
+    // Ambil maksimal 8 riwayat percakapan sebelumnya
+    final previousHistory = _history.length > 1
+        ? (_history.length > 8 ? _history.sublist(_history.length - 8, _history.length - 1) : _history.sublist(0, _history.length - 1))
+        : <ChatMessage>[];
+
+    for (final item in previousHistory) {
+      final text = item.text.trim();
+      if (text.isEmpty) continue;
+      messages.add({
+        'role': item.isUser ? 'user' : 'assistant',
+        'content': text,
+      });
+    }
+
+    // Tambah pesan pengguna terbaru
+    messages.add({
+      'role': 'user',
+      'content': message.trim(),
+    });
+
+    final headers = {
+      'Authorization': 'Bearer $key',
+      'Content-Type': 'application/json',
+    };
+
+    Exception? lastError;
+    for (final model in candidateModels) {
+      try {
+        final url = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
+        final res = await http.post(
+          url,
+          headers: headers,
+          body: json.encode({
+            'model': model,
+            'messages': messages,
+            'temperature': 0.7,
+            'max_tokens': 2048,
+          }),
+        ).timeout(const Duration(seconds: 25));
+
+        if (res.statusCode == 200) {
+          final jsonRes = json.decode(utf8.decode(res.bodyBytes));
+          final content = jsonRes['choices']?[0]?['message']?['content'];
+          if (content != null && content.toString().trim().isNotEmpty) {
+            return content.toString().trim();
+          }
+        }
+        lastError = Exception('Groq API ($model) status ${res.statusCode}: ${res.body}');
+      } catch (e) {
+        lastError = Exception('Groq API ($model) error: $e');
+      }
+    }
+
+    throw lastError ?? Exception('Gagal memanggil Groq Cloud API.');
+  }
+
   /// Call Gemini Flash API with context & alternating turn validation
   Future<String> _callGeminiApi(String message) async {
-    if (_geminiApiKey.isEmpty) {
+    final key = currentApiKey;
+    if (key.isEmpty) {
       throw Exception('API Key Gemini belum disetel.');
     }
 
-    // Daftar model aktif dengan dukungan generateContent (gemini-2.5-flash & gemini-flash-latest)
+    // Daftar model aktif resmi Google AI Studio
     const candidateModels = [
-      'gemini-2.5-flash',
-      'gemini-flash-latest',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+      'gemini-2.0-flash-lite',
     ];
 
     // Filter dan pastikan riwayat percakapan strictly alternating (user -> model -> user)
@@ -154,44 +341,38 @@ class GeminiService {
       'system_instruction': {
         'parts': [
           {
-            'text': 'Kamu adalah Tbot, asisten AI cerdas ramah dan serba bisa dari TimurLang, platform perizinan dan pendakian gunung modern di Indonesia. '
-                'Nama kamu adalah Tbot. '
-                'Kamu dapat menjawab segala macam topik secara akurat, lugas, santun, dan sangat membantu: '
-                'pengetahuan umum, sains, teknologi, matematika, rekomendasi gunung & wisata alam, '
-                'tips produktivitas, percakapan santai yang asyik, maupun panduan lengkap fitur aplikasi TimurLang dan keselamatan pendakian. '
-                'Gunakan gaya bahasa yang ramah, natural, informatif, dan terstruktur dengan rapi. '
-                'PENTING: Susun teks dengan bersih dan rapi. Hindari pemakaian tanda bintang ganda (**) yang berlebihan pada kata-kata biasa.'
+            'text': 'Kamu adalah Tbot, asisten AI resmi TimurLang. Kamu adalah pakar pendakian gunung, keselamatan di alam bebas, perlengkapan outdoor, navigasi alam, dan sistem perizinan Simaksi di Indonesia.\n\n'
+                'PANDUAN PERILAKU:\n'
+                '1. Jawab setiap pertanyaan seputar gunung, alam bebas, cuaca, perlengkapan, dan pendakian secara mendalam, cerdas, akurat, dan mengalir natural (BUKAN jawaban template).\n'
+                '2. Gunakan gaya bahasa yang ramah, santun, hangat, dan terstruktur rapi (gunakan poin-poin tebal markdown jika menjelaskan banyak hal).\n'
+                '3. Selalu utamakan keselamatan (safety first) dan prinsip kelestarian alam (Leave No Trace).\n'
+                '4. Jika pengguna bertanya hal di luar alam bebas atau pendakian, tolak dengan santun dan ramah lalu ajak berdiskusi seputar rencana mendaki.'
           }
         ]
       },
       'contents': contents,
       'generationConfig': {
         'temperature': 0.7,
-        'maxOutputTokens': 8192,
-        'thinkingConfig': {
-          'thinkingBudget': 0,
-        },
+        'maxOutputTokens': 2048,
       }
     });
 
     final headers = {
       'Content-Type': 'application/json',
-      // Header x-goog-api-key wajib untuk format authorization key baru (prefix AQ.)
-      'x-goog-api-key': _geminiApiKey,
+      'x-goog-api-key': key,
     };
 
     Exception? lastError;
     for (final model in candidateModels) {
       try {
-        final url = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$_geminiApiKey',
-        );
+        final endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$key';
+        final url = Uri.parse(endpoint);
 
         final res = await http.post(
           url,
           headers: headers,
           body: body,
-        ).timeout(const Duration(seconds: 30));
+        ).timeout(const Duration(seconds: 25));
 
         if (res.statusCode == 200) {
           final jsonRes = json.decode(res.body);
@@ -209,64 +390,111 @@ class GeminiService {
     throw lastError ?? Exception('Gagal memanggil Gemini Cloud API.');
   }
 
-  /// Universal Intelligence Engine (Multi-domain conversation)
+  /// Universal Intelligence Engine (Khusus Pendakian & Alam Bebas)
   String _generateUniversalResponse(String input) {
     final text = input.toLowerCase().trim();
 
-    // 1. Greeting & Casual Chat
+    // 1. Sapaan & Sopan Santun
     if (text == 'halo' || text == 'hai' || text.startsWith('halo ') || text.startsWith('hai ') || text == 'p' || text == 'hi') {
-      return '''**Halo! Saya Tbot, asisten AI resmi TimurLang.**
+      return '''**Halo! Saya Tbot, asisten AI resmi pendakian TimurLang.**
 
-Saya adalah asisten cerdas yang siap membantu Anda menjawab berbagai hal:
-• **Gunung & Petualangan:** Rekomendasi jalur, estimasi waktu, tips packing, etika pendakian.
-• **Cuaca & Alam:** Penjelasan kondisi cuaca, fenomena awan, navigasi arah.
-• **Fitur TimurLang:** Panduan Simaksi, peta offline, pemantau jatuh/SOS, rekam medis.
-• **Pengetahuan Umum:** Sains, teknologi, tips kesehatan, produktivitas, maupun obrolan santai.
-• **P3K & Keselamatan:** Penanganan cedera atau darurat di alam bebas.
+Saya siap membantu Anda seputar persiapan, informasi jalur, dan keselamatan pendakian gunung:
+• **Gunung & Jalur:** Rekomendasi gunung, estimasi jalur, pos perizinan, dan karakter medan.
+• **Cuaca & Alam:** Kondisi cuaca gunung, fenomena awan, dan arah navigasi.
+• **Perlengkapan & Packing:** Checklist peralatan wajib, pakaian layering, logistik.
+• **P3K & Keselamatan:** Penanganan cedera, hipotermia, AMS, dan keadaan darurat alam bebas.
+• **Fitur TimurLang:** Registrasi Simaksi resmi, peta offline, kompas, dan suar SOS.
 
-Ada yang bisa Tbot bantu atau ingin Anda diskusikan hari ini?''';
+Ada yang ingin Anda tanyakan seputar rencana pendakian Anda?''';
     }
 
     if (text.contains('siapa kamu') || text.contains('kamu siapa') || text.contains('tentang kamu') || text.contains('bot apa') || text.contains('tbot')) {
       return '''**Tentang Tbot:**
 
-Saya adalah **Tbot**, asisten virtual cerdas yang terintegrasi di dalam aplikasi **TimurLang**. 
+Saya adalah **Tbot**, asisten virtual resmi di dalam aplikasi **TimurLang**. 
 
-Selain memandu Anda mengenai aktivitas luar ruang dan sistem perizinan simaksi gunung, Tbot dirancang untuk menjawab pertanyaan umum, membantu mencari solusi sehari-hari, hingga menjadi teman diskusi yang interaktif.''';
+Fokus saya dikhususkan untuk memandu Anda seputar **aktivitas pendakian gunung, keselamatan di alam bebas, cuaca gunung, perlengkapan outdoor, dan sistem perizinan Simaksi**. Saya tidak melayani pertanyaan di luar konteks pendakian dan alam bebas.''';
     }
 
     if (text.contains('apa kabar') || text.contains('gimana kabarmu') || text.contains('sehat')) {
-      return '''Alhamdulillah, saya selalu aktif dan siap membantu Anda 24/7.
+      return '''Alhamdulillah, saya selalu aktif dan siap membantu persiapan pendakian Anda 24/7!
 
-Bagaimana dengan kabar Anda hari ini? Sedang merencanakan perjalanan, belajar, atau ada hal yang ingin ditanyakan?''';
+Bagaimana dengan rencana pendakian Anda hari ini? Ada gunung atau jalur yang ingin Anda diskusikan?''';
     }
 
     if (text.contains('terima kasih') || text.contains('makasih') || text.contains('thanks') || text.contains('thx')) {
-      return '''Sama-sama. Senang bisa membantu Anda.
+      return '''Sama-sama! Selalu utamakan keselamatan (safety first) dan lestarikan alam pegunungan kita.
 
-Jika ada pertanyaan lain seputar alam, teknologi, atau topik apa pun, silakan tanyakan saja ya. Semoga aktivitas Anda lancar.''';
+Jika ada hal lain yang ingin ditanyakan seputar jalur atau perizinan Simaksi, silakan tanyakan ya!''';
     }
 
-    if (text.contains('lucu') || text.contains('lelucon') || text.contains('jokes') || text.contains('tebak')) {
-      final jokes = [
-        '**Tebak-tebakan santai:**\n\n*Kenapa gunung nggak pernah kesepian?*\nJawabannya: *Karena selalu ada puncaknya yang bikin ramai, dan selalu punya lereng sebelah.*',
-        '**Humor Pendaki:**\n\n*Apa bedanya pacaran sama mendaki gunung?*\n*Kalau mendaki gunung butuh carrier yang kuat, kalau pacaran butuh komitmen yang tidak gampang turun.*',
-        '**Tebak-tebakan:**\n\n*Awan apa yang paling pintar?*\nJawabannya: *Awan-cerai (wawancara) beasiswa.*',
-      ];
-      return jokes[DateTime.now().second % jokes.length];
+    // 2. Rekomendasi Gunung, Puncak Tertinggi & Informasi Gunung
+    if (text.contains('tertinggi') || text.contains('puncak tertinggi') || text.contains('atap indonesia') || text.contains('7 summit') || text.contains('seven summit')) {
+      return '''**Gunung Tertinggi di Indonesia (The 7 Summits of Indonesia):**
+
+1. 🏔️ **Puncak Jaya / Carstensz Pyramid (4.884 mdpl - Papua Tengah)**
+   - Puncak tertinggi di Indonesia & salah satu dari *World Seven Summits*. Menghadirkan gletser salju abadi dan dinding panjat tebing teknis (Grade 5).
+2. 🌋 **Gunung Kerinci (3.805 mdpl - Jambi / Sumatra Barat)**
+   - Gunung berapi aktif tertinggi di Indonesia sekaligus puncak tertinggi di Pulau Sumatra.
+3. 🌋 **Gunung Rinjani (3.726 mdpl - Lombok, NTB)**
+   - Gunung berapi tertinggi kedua di Indonesia dengan panorama kaldera megah dan Danau Segara Anak.
+4. 🌋 **Gunung Semeru / Mahameru (3.676 mdpl - Jawa Timur)**
+   - Atap Pulau Jawa dengan kawah legendaris Jonggring Saloko dan danau Ranu Kumbolo.
+5. ⛰️ **Gunung Latimojong / Rante Mario (3.430 mdpl - Sulawesi Selatan)**
+   - Titik tertinggi di Pulau Sulawesi dengan hutan lumut purba lebat.
+6. ⛰️ **Gunung Binaiya (3.027 mdpl - Maluku / Pulau Seram)**
+   - Puncak tertinggi di Kepulauan Maluku dengan medan hutan hujan tropis yang menantang.
+7. ⛰️ **Bukit Raya (2.278 mdpl - Kalimantan Tengah / Barat)**
+   - Titik tertinggi di wilayah Indonesia Pulau Kalimantan (Taman Nasional Bukit Baka Bukit Raya).
+
+*Tips:* Anda dapat melihat detail jalur resmi, kuota basecamp, dan perizinan Simaksi gunung-gunung di atas melalui menu **Peta** atau **Gunung** di aplikasi TimurLang!''';
     }
 
-    // 2. Rekomendasi Gunung & Destinasi Wisata
+    if (text.contains('tertinggi di jawa') || text.contains('atap jawa') || text.contains('gunung tertinggi jawa')) {
+      return '''**Daftar Gunung Tertinggi di Pulau Jawa:**
+
+1. **Gunung Semeru (3.676 mdpl - Jatim)** - Puncak Mahameru (Atap Pulau Jawa)
+2. **Gunung Slamet (3.432 mdpl - Jateng)** - Puncak Surono (Tertinggi di Jawa Tengah)
+3. **Gunung Sumbing (3.371 mdpl - Jateng)** - Puncak Rajawali
+4. **Gunung Arjuno (3.339 mdpl - Jatim)** - Puncak Ogal-Agil
+5. **Gunung Raung (3.332 mdpl - Jatim)** - Puncak Sejati (Kaldera Terbesar)
+6. **Gunung Lawu (3.265 mdpl - Jateng/Jatim)** - Puncak Hargo Dumilah
+7. **Gunung Welirang (3.156 mdpl - Jatim)**
+8. **Gunung Sindoro (3.153 mdpl - Jateng)**
+9. **Gunung Merbabu (3.145 mdpl - Jateng)** - Puncak Kenteng Songo
+10. **Gunung Ciremai (3.078 mdpl - Jabar)** - Tertinggi di Jawa Barat''';
+    }
+
+    if (text.contains('andong')) {
+      return '''**Informasi Gunung Andong (1.726 mdpl - Magelang, Jawa Tengah):**
+
+- **Karakter:** Gunung perisai ramah pemula dan keluarga dengan pemandangan 360° spektakuler.
+- **Empat Puncak Berjajar:** Puncak Makam, Puncak Jiwa, Puncak Andong (utama), dan Puncak Alap-alap.
+- **Jalur Pendakian Resmi:**
+  1. **Via Sawit:** Jalur paling populer dan ramai. Tersedia Jalur Lama dan Jalur Baru yang melewati Pos 1 Watu Pocong, Pos 2 Watu Gambir, Pos 3 Gambar Wayang, dan Camp Area (±1,5 - 2 jam).
+  2. **Via Gogik:** Jalur alternatif suasana asri pedesaan dengan medan bebatuan.
+  3. **Via Pendem:** Jalur landai dari sisi barat lereng gunung.
+- **Daya Tarik:** Pemandangan lautan awan sunrise serta view gagah Merbabu, Merapi, Sindoro, dan Sumbing.''';
+    }
+
+    if (text.contains('prau')) {
+      return '''**Informasi Gunung Prau (2.565 mdpl - Dataran Tinggi Dieng, Jateng):**
+
+- **Daya Tarik:** Golden Sunrise terbaik dan hamparan Bukit Teletubbies yang luas.
+- **Jalur Populer:** Patakbanteng (jalur tercepat ±2-3 jam, tangga batu), Kalilembu, Dwarawati, Wates, dan Dieng Kulon.
+- **Waktu Terbaik:** Musim kemarau (Mei - September). Suhu malam bisa mencapai minus derajat (fenomena embun upas / es).''';
+    }
+
     if (text.contains('rekomendasi gunung') || text.contains('gunung pemula') || text.contains('gunung cocok untuk pemula') || text.contains('gunung santai')) {
       return '''**Rekomendasi Gunung Cocok untuk Pemula di Jawa:**
 
 1. **Gunung Prau (2.565 mdpl - Dieng, Jateng)**
    - Waktu tempuh: 2,5 - 4 jam
-   - Daya tarik: Golden Sunrise dan Bukit Teletubbies. Jalur relatif landai dan jelas via Patakbanteng atau Kalilembu.
+   - Daya tarik: Golden Sunrise dan Bukit Teletubbies. Jalur relatif landai via Patakbanteng atau Kalilembu.
 
 2. **Gunung Andong (1.726 mdpl - Magelang, Jateng)**
    - Waktu tempuh: 1,5 - 2,5 jam
-   - Daya tarik: Sangat ramah pemula, pemandangan 360° melihat Merbabu, Merapi, Sindoro, dan Sumbing.
+   - Daya tarik: Sangat ramah pemula, panorama 360° menghadap Merbabu, Merapi, Sindoro, dan Sumbing.
 
 3. **Gunung Papandayan (2.665 mdpl - Garut, Jabar)**
    - Waktu tempuh: 3 - 4 jam
@@ -274,7 +502,7 @@ Jika ada pertanyaan lain seputar alam, teknologi, atau topik apa pun, silakan ta
 
 4. **Gunung Ijen (2.386 mdpl - Banyuwangi, Jatim)**
    - Waktu tempuh: 2 - 3 jam
-   - Daya tarik: Fenomena Blue Fire dan danau kawah asam toska.
+   - Daya tarik: Fenomena Blue Fire dan kawah asam toska memukau.
 
 *Tips:* Pastikan selalu registrasi Simaksi resmi melalui aplikasi TimurLang sebelum mendaki.''';
     }
@@ -306,22 +534,56 @@ Jika ada pertanyaan lain seputar alam, teknologi, atau topik apa pun, silakan ta
 - **Karakter Jalur:** Jalur Selo relatif terbuka dan berdebu saat kemarau, sedangkan jalur Suwanting memiliki tanjakan fisik menantang.''';
     }
 
-    // 3. Tips Perlengkapan & Packing (Ultralight / Standar)
-    if (text.contains('packing') || text.contains('perlengkapan') || text.contains('bawa apa') || text.contains('alat pendakian')) {
-      return '''**Daftar Perlengkapan Wajib Pendakian (Checklist):**
+    if (text.contains('lawu')) {
+      return '''**Informasi Gunung Lawu (3.265 mdpl - Perbatasan Jateng & Jatim):**
 
-**1. Shelter & Tidur:**
-- Tenda double-layer sesuai kapasitas
-- Sleeping bag (sesuaikan comfort rating dengan suhu gunung)
-- Matras aluminium / tiup
-- Flysheet tambahan
+- **Jalur Populer:** Candi Cetho (savana luas & terpanjang), Cemoro Sewu (jalur bebatuan teratur & tercepat), Cemoro Kandang.
+- **Ikon Utama:** Warung Mbok Yem di Hargo Dumilah, Sendang Drajat, dan Pasar Dieng.
+- **Karakter Cuaca:** Terkenal memiliki suhu dingin ekstrem dan angin kencang saat musim kemarau.''';
+    }
 
-**2. Pakaian (Prinsip Layering):**
-- Base layer (baju sintetis/quick-dry, hindari katun tebal)
-- Mid layer (fleece / jaket insulasi)
-- Outer layer (jaket waterproof & windbreaker)
-- Jas hujan (ponco / rain suit)
-- Sarung tangan, buff, dan kupluk hangat
+    if (text.contains('sindoro') || text.contains('sumbing')) {
+      return '''**Informasi Gunung Sindoro (3.153 mdpl) & Sumbing (3.371 mdpl):**
+
+- **Gunung Kembar Jawa Tengah:** Terletak berhadapan di Temanggung & Wonosobo.
+- **Sindoro:** Jalur Kledung dan Alang-alang Sewu. Puncak memiliki kawah luas aktif belerang.
+- **Sumbing:** Jalur Garung, Bowongso, Kaliangkrik. Jalur menantang dengan ikon Kawah Mati dan Puncak Rajawali.
+- **Tips:** Siapkan masker/buff untuk mengantisipasi aroma belerang di sekitar puncak.''';
+    }
+
+    if (text.contains('slamet')) {
+      return '''**Informasi Gunung Slamet (3.432 mdpl - Jawa Tengah):**
+
+- **Status:** Gunung tertinggi kedua di Pulau Jawa.
+- **Jalur Populer:** Bambangan (Purbalingga), Guci (Tegal), Dipajaya (Pemalang).
+- **Karakter Medan:** Vegetasi hutan lebat dan jalur puncak berupa pasir/bebatuan vulkanik terjal tanpa sumber air setelah pos atas.''';
+    }
+
+    if (text.contains('gede') || text.contains('pangrango')) {
+      return '''**Informasi Gunung Gede (2.958 mdpl) & Pangrango (3.019 mdpl - Jabar):**
+
+- **Jalur Resmi:** Cibodas, Gunung Putri, dan Selabintana.
+- **Ikon Utama Gede:** Alun-Alun Surya Kencana (padang edelweis 50 hektar), Telaga Biru, Air Terjun Cibeureum.
+- **Ikon Utama Pangrango:** Lembah Mandalawangi yang syahdu dan tenang.
+- **Perizinan:** Wajib booking Simaksi online TNGGP jauh-jauh hari karena kuota ketat.''';
+    }
+
+    // 3. Perlengkapan & Packing Mendaki
+    if (text.contains('packing') || text.contains('perlengkapan') || text.contains('bawa apa') || text.contains('alat pendakian') || text.contains('tenda') || text.contains('carrier')) {
+      return '''**Daftar Perlengkapan Wajib Pendakian (Checklist Outdoor):**
+
+**1. Shelter & Istirahat:**
+- Tenda double-layer dengan frame kokoh
+- Sleeping bag (comfort rating 5°C - 10°C)
+- Matras aluminium foil / matras tiup insulasi
+- Flysheet tambahan untuk pelindung angin/hujan
+
+**2. Pakaian (Prinsip 3-Layer System):**
+- Base layer (baju sintetis/quick-dry, jangan katun tebal)
+- Mid layer (fleece / jaket thermal insulasi)
+- Outer layer (jaket waterproof & windbreaker Gore-Tex)
+- Jas hujan (ponco atau setelan)
+- Sarung tangan polar/waterproof, buff, & kupluk hangat
 
 **3. Navigasi & Penerangan:**
 - Headlamp + baterai cadangan
@@ -334,139 +596,129 @@ Jika ada pertanyaan lain seputar alam, teknologi, atau topik apa pun, silakan ta
 
 **5. Medis & Keselamatan:**
 - Kotak P3K standar & obat pribadi
-- Peluit darurat''';
+- Peluit darurat (emergency whistle)''';
     }
 
-    if (text.contains('etika') || text.contains('leave no trace') || text.contains('aturan mendaki')) {
-      return '''**Prinsip Dasar "Leave No Trace" (Etika Pendaki):**
+    if (text.contains('etika') || text.contains('leave no trace') || text.contains('aturan mendaki') || text.contains('sampah')) {
+      return '''**Prinsip Dasar "Leave No Trace" (Etika Pendaki Gunung):**
 
-1. **Rencanakan dan persiapkan matang-matang:** Cek kuota, simaksi, dan ramalan cuaca.
-2. **Berjalan dan berkemah di jalur yang sudah ada:** Jangan membuka jalur liar baru.
-3. **Bawa pulang sampah Anda:** Ambil foto, tinggalkan jejak, jangan meninggalkan sampah.
-4. **Tinggalkan apa yang Anda temukan:** Jangan memetik bunga edelweis atau merusak batuan.
-5. **Kurangi dampak api unggun:** Hindari membuat api unggun di area rawan kebakaran hutan.
-6. **Hormati satwa liar:** Jangan memberi makan hewan liar di gunung.
-7. **Hargai pendaki lain:** Jangan menyetel musik kencang di area perkemahan.''';
+1. **Rencanakan dan persiapkan matang-matang:** Cek kuota, izin Simaksi, dan ramalan cuaca.
+2. **Berjalan dan berkemah di jalur yang sudah ada:** Jangan membuat jalur pintas atau merusak tanaman.
+3. **Bawa pulang seluruh sampah Anda:** Jangan meninggalkan sampah plastik, tisu basah, atau puntung rokok.
+4. **Tinggalkan apa yang Anda temukan:** Dilarang keras memetik bunga edelweis atau mencoret batu/pohon (vandalisme).
+5. **Kurangi dampak api unggun:** Hindari membuat api unggun di area rawan kebakaran hutan pegunungan.
+6. **Hormati satwa liar:** Jangan memberi makan hewan di gunung dan amankan logistik makanan di dalam tenda.
+7. **Hargai pendaki lain:** Jaga ketenangan, jangan memutar musik speaker kencang di camp area.''';
     }
 
-    // 4. Sains, Cuaca, & Fenomena Alam
-    if (text.contains('cuaca') || text.contains('awan') || text.contains('hujan') || text.contains('petir')) {
-      return '''**Memahami Fenomena Cuaca di Alam Bebas:**
+    // 4. Cuaca Gunung & Fenomena Alam
+    if (text.contains('cuaca') || text.contains('awan') || text.contains('hujan') || text.contains('petir') || text.contains('badai') || text.contains('angin')) {
+      return '''**Memahami Fenomena Cuaca di Alam Bebas & Gunung:**
 
-- **Awan Kumulonimbus (Cb):** Awan hitam pekat menjulang tinggi seperti menara. Pertanda badai petir, hujan lebat mendadak, dan angin kencang. Jika melihat awan ini mendekat, **segera turun dari puncak atau punggungan terbuka.**
-- **Awan Lentikularis (Topi Awan):** Awan berbentuk piring melayang di atas puncak gunung. Mengindikasikan adanya angin badai berkecepatan ekstrem (turbulence) di ketinggian puncak.
+- **Awan Kumulonimbus (Cb):** Awan hitam pekat menjulang tinggi seperti menara. Pertanda badai petir dan angin kencang. Jika melihat awan ini mendekat, **segera turun dari puncak atau punggungan terbuka.**
+- **Awan Lentikularis (Topi Awan):** Awan berbentuk piring melayang di atas puncak gunung. Mengindikasikan badai angin kencang berkecepatan ekstrem di puncak.
 - **Ketinggian vs Suhu (Lapse Rate):** Setiap kenaikan elevasi 100 meter, suhu udara alami akan turun sekitar 0.6°C - 0.65°C.
 
-*Tips:* Gunakan menu **Informasi Cuaca** di aplikasi TimurLang untuk memantau data satelit live lokasi Anda.''';
+*Tips:* Gunakan menu **Informasi Cuaca** di aplikasi TimurLang untuk memantau data satelit live lokasi pendakian Anda.''';
     }
 
-    if (text.contains('bumi') || text.contains('gravitasi') || text.contains('sains') || text.contains('matahari')) {
-      return '''**Fakta Sains Alam:**
-
-- **Tekanan Udara di Ketinggian:** Semakin tinggi Anda mendaki, molekul oksigen di udara semakin renggang. Pada ketinggian 3.000 mdpl, tekanan udara berkurang sekitar 30% dibanding permukaan laut, sehingga napas terasa lebih cepat terengah-engah.
-- **Titik Didih Air:** Di permukaan laut air mendidih pada 100°C, tetapi di puncak gunung (misal 3.000 mdpl) air bisa mendidih pada suhu ~90°C karena tekanan atmosfer lebih rendah.''';
-    }
-
-    // 5. Teknologi & Coding / Aplikasi TimurLang
+    // 5. Fitur TimurLang & Simaksi
     if (text.contains('timurlang') || text.contains('aplikasi ini') || text.contains('cara pakai') || text.contains('fitur')) {
-      return '''**Panduan Fitur Aplikasi TimurLang:**
+      return '''**Panduan Fitur Aplikasi TimurLang untuk Pendaki:**
 
-1. **Informasi Cuaca:** Terintegrasi API satelit real-time berdasarkan GPS presisi Anda beserta prakiraan 5 hari ke depan.
-2. **Siaga SOS & Deteksi Jatuh:** Sensor akselerometer mendeteksi guncangan hebat secara otomatis dan meluncurkan suar darurat SAR.
-3. **Peta Offline & Jalur:** Navigasi jalur pendakian tanpa memerlukan koneksi internet aktif.
+1. **Informasi Cuaca:** Terintegrasi API satelit real-time berdasarkan GPS presisi elevasi Anda.
+2. **Siaga SOS & Deteksi Jatuh:** Sensor akselerometer mendeteksi benturan hebat secara otomatis dan memancarkan suar darurat SAR.
+3. **Peta Offline & Jalur:** Navigasi jalur pendakian tanpa memerlukan sinyal internet.
 4. **Kompas 3D Digital:** Penunjuk arah mata angin kardinal dengan kalibrasi sensor gyroscope.
 5. **Booking Simaksi Terpadu:** Pengajuan izin pendakian resmi dengan validasi kuota harian pos basecamp.
-6. **Rekam Medis Darurat:** Informasi golongan darah dan kontak keluarga darurat yang siap diakses penyelamat.''';
+6. **Rekam Medis Darurat:** Informasi golongan darah dan kontak keluarga darurat yang siap diakses penyelamat SAR.''';
     }
 
-    if (text.contains('simaksi') || text.contains('booking') || text.contains('izin')) {
+    if (text.contains('simaksi') || text.contains('booking') || text.contains('izin') || text.contains('tiket')) {
       return '''**Cara Pengajuan Simaksi di TimurLang:**
 
-1. Buka menu **Gunung** di beranda atau pilih gunung tujuan Anda.
+1. Buka menu **Gunung** di beranda aplikasi TimurLang atau pilih gunung tujuan Anda.
 2. Pastikan kuota harian masih tersedia dan jalur berstatus **"Buka"**.
 3. Ketuk tombol **"Booking Simaksi"**.
 4. Lengkapi formulir tanggal naik, tanggal turun, pos basecamp, serta jumlah anggota rombongan.
 5. Lanjutkan ke verifikasi dan selesaikan pembayaran untuk mendapatkan e-Tiket resmi dengan kode hash validasi.''';
     }
 
-    if (text.contains('coding') || text.contains('flutter') || text.contains('dart') || text.contains('teknologi')) {
-      return '''**Seputar Teknologi Aplikasi TimurLang:**
-
-Aplikasi ini dibangun menggunakan **Flutter & Dart** dengan arsitektur modern:
-- **State Management & Service Singleton:** Mengatur sinkronisasi data antar modul secara efisien.
-- **Hardware Integration:** Mengakses sensor akselerometer (sensors_plus), giroskop, GPS satelit (geolocator), serta native Kotlin channel (MethodChannel).
-- **Dual Database:** SQLite lokal untuk kemampuan penuh luring (offline-first) dan Supabase Cloud untuk sinkronisasi daring.''';
-    }
-
-    // 6. Kesehatan, Produktivitas, & Kebugaran
+    // 6. Latihan Fisik & Kesehatan Mendaki
     if (text.contains('latihan fisik') || text.contains('olahraga') || text.contains('persiapan fisik') || text.contains('jogging')) {
       return '''**Panduan Latihan Fisik Sebelum Pendakian:**
 
-Lakukan latihan rutin 2-3 minggu sebelum mendaki:
+Lakukan latihan rutin 2-3 minggu sebelum naik gunung:
 1. **Latihan Kardio (3-4x seminggu):**
    - Jogging santai 30-45 menit untuk membangun kapasitas paru-paru (VO2 Max).
-   - Naik-turun tangga gedung/jembatan penyeberangan (sangat efektif melatih otot paha dan betis).
+   - Naik-turun tangga gedung/jembatan untuk melatih otot paha dan betis.
 2. **Latihan Kekuatan (Strength Training):**
-   - Squats, lunges, dan calf raises untuk memperkuat lutut dan tungkai.
-   - Plank dan core workout untuk kestabilan punggung saat menggendong tas carrier berat.
+   - Squats, lunges, dan calf raises untuk memperkuat sendi lutut dan tungkai.
+   - Plank dan core workout untuk kestabilan punggung saat membawa carrier berat.
 3. **Simulasi Carrier:**
    - Berjalan kaki sambil membawa tas ransel berisi beban 5-8 kg untuk membiasakan postur tubuh.''';
     }
 
-    if (text.contains('ams') || text.contains('mountain sickness') || text.contains('penyakit ketinggian')) {
+    if (text.contains('ams') || text.contains('mountain sickness') || text.contains('penyakit ketinggian') || text.contains('aklimatisasi')) {
       return '''**Memahami Acute Mountain Sickness (AMS):**
 
-AMS terjadi akibat tubuh belum sempat beraklimatisasi dengan penurunan kadar oksigen di ketinggian (>2.400 mdpl).
+AMS terjadi akibat tubuh belum sempat beraklimatisasi dengan penurunan tekanan oksigen di ketinggian (>2.400 mdpl).
 
-- **Gejala Umum:** Pusing/sakit kepala berdenyut, mual, kehilangan nafsu makan, lemas, sulit tidur.
+- **Gejala Umum:** Pusing/sakit kepala berdenyut, mual, kehilangan nafsu makan, badan lemas luar biasa, sulit tidur.
 - **Pencegahan:**
   1. Naik perlahan (Climb high, sleep low).
-  2. Perbanyak minum air putih (hindari dehidrasi).
-  3. Jangan memaksakan diri berlari di jalur terjal.
+  2. Perbanyak minum air putih (minimal 3 liter/hari, hindari dehidrasi).
+  3. Hindari konsumsi alkohol atau obat tidur di gunung.
 - **Penanganan:**
-  - Istirahat dan jangan lanjutkan naik.
-  - Jika gejala memburuk atau sesak napas -> **SEGERA TURUN KE ELEVASI LEBIH RENDAH.**''';
+  - Istirahat dan jangan lanjutkan perjalanan naik.
+  - Jika gejala memburuk atau mengalami sesak napas -> **SEGERA EVAKUASI TURUN KE ELEVASI LEBIH RENDAH.**''';
     }
 
-    // 7. P3K & Keselamatan
+    // 7. P3K & Keselamatan di Alam Bebas
+    if (text.contains('hipotermia') || text.contains('kedinginan') || text.contains('menggigil')) {
+      return '''**Penanganan Darurat Hipotermia di Gunung:**
+
+1. **Cegah paparan angin:** Segera masukkan korban ke dalam tenda tertutup.
+2. **Lepas pakaian basah:** Ganti seluruh pakaian yang lembap dengan pakaian kering hangat.
+3. **Hangatkan tubuh bertahap:** Masukkan ke dalam sleeping bag berlapis, gunakan matras aluminium agar tidak bersentuhan langsung dengan tanah dingin.
+4. **Berikan asupan hangat:** Berikan air manis hangat (teh manis/madu hangat) jika korban sadar penuh.
+5. **Skin-to-skin contact:** Jika kondisi parah, masuk bersama pendamping ke dalam sleeping bag untuk mentransfer panas tubuh.''';
+    }
+
     if (text.contains('luka') || text.contains('berdarah')) {
-      return '''**Penanganan Luka Terbuka:**
-1. Hentikan pendarahan dengan menekan luka menggunakan kain bersih selama 10-15 menit.
-2. Bilas luka dengan air bersih mengalir.
-3. Oleskan antiseptik (povidone iodine) dan balut dengan perban steril.''';
+      return '''**Penanganan Luka Terbuka di Jalur:**
+
+1. Hentikan pendarahan dengan menekan luka menggunakan kain kasa bersih selama 10-15 menit.
+2. Bersihkan sekitar luka dengan air mengalir bersih.
+3. Oleskan antiseptik (povidone iodine) dan tutup rapat dengan perban steril.''';
     }
 
-    if (text.contains('patah') || text.contains('fraktur')) {
-      return '''**Penanganan Dugaan Patah Tulang:**
-1. Jangan gerakkan area yang cedera.
-2. Buat bidai penyangga darurat dari ranting/trekking pole.
-3. Kompres dingin untuk mengurangi pembengkakan dan jangan mencoba meluruskan tulang sendiri.''';
+    if (text.contains('patah') || text.contains('fraktur') || text.contains('terkilir') || text.contains('keseleo')) {
+      return '''**Penanganan Dugaan Patah Tulang / Terkilir:**
+
+1. Istirahatkan bagian tubuh yang cedera, jangan dipaksa berjalan.
+2. Buat bidai penyangga darurat menggunakan ranting pohon lurus atau trekking pole yang diikat dengan kain mitela/buff.
+3. Kompres dingin untuk meredakan bengkak jika tersedia air es.''';
     }
 
-    if (text.contains('hipotermia') || text.contains('kedinginan')) {
-      return '''**Penanganan Hipotermia:**
-1. Pindahkan korban ke tempat terlindung dari terpaan angin kencang.
-2. Ganti seluruh pakaian basah dengan pakaian kering.
-3. Masukkan ke dalam sleeping bag berlapis dan berikan minuman manis hangat bertahap.''';
-    }
+    if (text.contains('ular') || text.contains('gigitan ular') || text.contains('hewan')) {
+      return '''**Penanganan Gigitan Ular Berbisa:**
 
-    if (text.contains('ular') || text.contains('gigitan ular')) {
-      return '''**Penanganan Gigitan Ular:**
-1. Tenangkan korban dan minimalkan gerakan tubuh agar racun tidak cepat menyebar.
+1. Tenangkan korban dan minimalkan gerakan tubuh agar racun tidak cepat menyebar ke peredaran darah.
 2. Posisikan area gigitan lebih rendah dari posisi jantung.
-3. JANGAN mengiris, menghisap luka, atau mengompres es batu.
-4. Segera evakuasi ke fasilitas medis terdekat.''';
+3. **JANGAN PERNAH** mengiris luka, menyedot racun dengan mulut, atau mengompres es batu.
+4. Segera hubungi basecamp via fitur SOS TimurLang untuk evakuasi darurat medis.''';
     }
 
-    // 8. General Open-Ended Conversational Fallback (Offline Mode)
-    return 'Maaf, Tbot saat ini berjalan dalam mode luring (offline engine) atau koneksi ke Google Gemini Cloud terputus.\n\n'
-        'Dalam mode luring, Tbot tetap dapat menjawab topik seputar:\n'
-        '• Rekomendasi gunung pemula & jalur (Prau, Andong, Semeru, Rinjani, Merbabu)\n'
-        '• Tips packing & perlengkapan outdoor\n'
-        '• Pemahaman cuaca & fenomena alam\n'
-        '• Panduan P3K & pertolongan cedera darurat\n'
-        '• Panduan fitur TimurLang & Simaksi\n\n'
-        'Untuk jawaban cerdas mendalam dari Google Gemini AI, pastikan ponsel Anda terhubung ke internet.';
+    // 8. Default: Tolak Topik di Luar Konteks Pendakian
+    return 'Maaf, saya adalah Tbot, asisten khusus **pendakian gunung dan alam bebas TimurLang**.\n\n'
+        'Saya hanya dapat membantu Anda menjawab hal-hal seputar:\n'
+        '• Rekomendasi gunung & informasi jalur pendakian di Indonesia\n'
+        '• Perlengkapan mendaki, checklist packing, & pakaian outdoor\n'
+        '• Prakiraan cuaca gunung & navigasi alam (kompas & peta)\n'
+        '• Pertolongan Pertama (P3K), pencegahan Hipotermia & gejala AMS\n'
+        '• Panduan perizinan Simaksi dan fitur aplikasi TimurLang\n\n'
+        'Silakan tanyakan hal-hal yang berkaitan dengan persiapan atau aktivitas pendakian Anda!';
   }
 
   /// Clear chat history

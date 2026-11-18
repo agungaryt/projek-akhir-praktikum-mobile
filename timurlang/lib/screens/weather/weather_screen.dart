@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/weather_service.dart';
+import '../../data/seed_data.dart';
 
 class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
@@ -46,6 +47,20 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
     {'name': 'Gunung Kerinci', 'query': 'Kerinci', 'lat': -1.6970, 'lon': 101.2640},
     {'name': 'Gunung Slamet', 'query': 'Bambangan', 'lat': -7.2425, 'lon': 109.2080},
     {'name': 'Gunung Lawu', 'query': 'Karanganyar', 'lat': -7.6258, 'lon': 111.1925},
+  ];
+
+  // Daftar kota populer Indonesia untuk quick selector
+  final List<String> _popularCities = [
+    'Malang',
+    'Bandung',
+    'Yogyakarta',
+    'Surabaya',
+    'Jakarta',
+    'Bogor',
+    'Garut',
+    'Wonosobo',
+    'Denpasar',
+    'Semarang',
   ];
 
   @override
@@ -116,10 +131,40 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
       List<WeatherForecast> forecast;
       List<HourlyForecast> hourly;
 
-      if (lat != null && lon != null) {
-        current = await WeatherService.instance.getCurrentWeather(lat, lon);
-        forecast = await WeatherService.instance.getForecast(lat, lon);
-        hourly = await WeatherService.instance.getHourlyForecast(lat, lon);
+      double? finalLat = lat;
+      double? finalLon = lon;
+      String? displayName = cityName;
+
+      // Jika lat/lon belum ada, cari apakah cityName cocok dengan gunung di SeedData
+      if ((finalLat == null || finalLon == null) && cityName != null && cityName.trim().isNotEmpty) {
+        final query = cityName.toLowerCase().trim();
+        final cleanQuery = query.replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '').trim();
+
+        final match = SeedData.initialMountains.firstWhere(
+          (m) {
+            final mName = (m['nama_gunung'] as String).toLowerCase();
+            final cleanM = mName.replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '').trim();
+            return mName == query || cleanM == cleanQuery || mName.contains(cleanQuery) || cleanM.contains(cleanQuery);
+          },
+          orElse: () => {},
+        );
+
+        if (match.isNotEmpty) {
+          finalLat = (match['koordinat_lat'] as num?)?.toDouble();
+          finalLon = (match['koordinat_long'] as num?)?.toDouble();
+          displayName = match['nama_gunung'] as String?;
+          _selectedLat = finalLat;
+          _selectedLon = finalLon;
+        }
+      }
+
+      if (finalLat != null && finalLon != null) {
+        current = await WeatherService.instance.getCurrentWeather(finalLat, finalLon);
+        forecast = await WeatherService.instance.getForecast(finalLat, finalLon);
+        hourly = await WeatherService.instance.getHourlyForecast(finalLat, finalLon);
+        if (displayName != null) {
+          current = current.copyWith(locationName: displayName);
+        }
       } else if (_selectedCity != null) {
         current = await WeatherService.instance.getWeatherByCity(_selectedCity!);
         forecast = await WeatherService.instance.getForecastByCity(_selectedCity!);
@@ -156,188 +201,357 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(ctx).size.height * 0.85,
-            ),
-            padding: EdgeInsets.only(
-              top: 18,
-              left: 20,
-              right: 20,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 18,
-            ),
-            decoration: const BoxDecoration(
-              color: Color(0xFA1E293B),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Pilih Lokasi Cuaca',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _searchCtrl,
-                    autofocus: true,
-                    style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Cari kota atau gunung...',
-                      hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white38),
-                      prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                      filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.08),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF38BDF8)),
-                        onPressed: () {
-                          final text = _searchCtrl.text.trim();
-                          if (text.isNotEmpty) {
-                            Navigator.pop(ctx);
-                            _loadWeather(cityName: text);
-                          }
-                        },
-                      ),
-                    ),
-                    onSubmitted: (val) {
-                      if (val.trim().isNotEmpty) {
-                        Navigator.pop(ctx);
-                        _loadWeather(cityName: val.trim());
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            final query = _searchCtrl.text.trim().toLowerCase();
+            final cleanQuery = query.replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '').trim();
 
-                  // Tombol GPS Saya
-                  InkWell(
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      setState(() {
-                        _selectedCity = null;
-                        _selectedLat = null;
-                        _selectedLon = null;
-                      });
-                      _searchCtrl.clear();
-                      _loadWeather();
-                    },
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0284C7).withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.my_location_rounded, color: Color(0xFF38BDF8), size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Gunakan Lokasi GPS Saya',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                Text(
-                                  'Deteksi akurat koordinat satelit ponsel saat ini',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    color: Colors.white60,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right_rounded, color: Colors.white38),
-                        ],
-                      ),
-                    ),
-                  ),
+            List<Map<String, dynamic>> matchingMountains = [];
+            if (cleanQuery.isNotEmpty) {
+              matchingMountains = SeedData.initialMountains.where((m) {
+                final mName = (m['nama_gunung'] as String).toLowerCase();
+                final cleanM = mName.replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '').trim();
+                return mName.contains(cleanQuery) || cleanM.contains(cleanQuery);
+              }).take(6).toList();
+            }
 
-                  const SizedBox(height: 18),
-                  Text(
-                    'Gunung Populer',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _popularMountains.map((m) {
-                      return InkWell(
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          _loadWeather(
-                            cityName: m['name'] as String,
-                            lat: m['lat'] as double?,
-                            lon: m['lon'] as double?,
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(20),
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+                ),
+                padding: EdgeInsets.only(
+                  top: 18,
+                  left: 20,
+                  right: 20,
+                  bottom: MediaQuery.of(ctx).viewInsets.bottom + 18,
+                ),
+                decoration: const BoxDecoration(
+                  color: Color(0xFA1E293B),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          width: 40,
+                          height: 4,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white12),
+                            color: Colors.white24,
+                            borderRadius: BorderRadius.circular(2),
                           ),
-                          child: Row(
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Pilih Lokasi Cuaca',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _searchCtrl,
+                        autofocus: true,
+                        style: GoogleFonts.plusJakartaSans(color: Colors.white),
+                        onChanged: (_) => setModalState(() {}),
+                        decoration: InputDecoration(
+                          hintText: 'Cari kota atau gunung...',
+                          hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white38),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                          filled: true,
+                          fillColor: Colors.white.withValues(alpha: 0.08),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          suffixIcon: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.landscape_rounded, size: 14, color: Color(0xFF38BDF8)),
-                              const SizedBox(width: 6),
-                              Text(
-                                m['name'] as String,
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                              if (_searchCtrl.text.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.close_rounded, color: Colors.white54, size: 18),
+                                  onPressed: () {
+                                    _searchCtrl.clear();
+                                    setModalState(() {});
+                                  },
                                 ),
+                              IconButton(
+                                icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF38BDF8)),
+                                onPressed: () {
+                                  final text = _searchCtrl.text.trim();
+                                  if (text.isNotEmpty) {
+                                    Navigator.pop(ctx);
+                                    _loadWeather(cityName: text);
+                                  }
+                                },
                               ),
                             ],
                           ),
                         ),
-                      );
-                    }).toList(),
+                        onSubmitted: (val) {
+                          if (val.trim().isNotEmpty) {
+                            Navigator.pop(ctx);
+                            _loadWeather(cityName: val.trim());
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Jika ada gunung yang cocok dengan pencarian, tampilkan langsung
+                      if (matchingMountains.isNotEmpty) ...[
+                        Text(
+                          'Gunung Sesuai Pencarian',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: const Color(0xFF38BDF8),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...matchingMountains.map((m) {
+                          final name = m['nama_gunung'] as String;
+                          final elev = m['elevasi_mdpl'];
+                          final lat = (m['koordinat_lat'] as num?)?.toDouble();
+                          final lon = (m['koordinat_long'] as num?)?.toDouble();
+                          return InkWell(
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              _loadWeather(cityName: name, lat: lat, lon: lon);
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white10),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.terrain_rounded, color: Color(0xFF38BDF8), size: 18),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      name,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  if (elev != null)
+                                    Text(
+                                      '$elev mdpl',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: Colors.white54,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 8),
+                      ],
+
+                      if (_searchCtrl.text.trim().isNotEmpty) ...[
+                        InkWell(
+                          onTap: () {
+                            final text = _searchCtrl.text.trim();
+                            Navigator.pop(ctx);
+                            _loadWeather(cityName: text);
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.location_city_rounded, color: Colors.white70, size: 16),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Cari "${_searchCtrl.text.trim()}" di OpenWeatherMap...',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 12),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+
+                      // Tombol GPS Saya
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          setState(() {
+                            _selectedCity = null;
+                            _selectedLat = null;
+                            _selectedLon = null;
+                          });
+                          _searchCtrl.clear();
+                          _loadWeather();
+                        },
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0284C7).withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.my_location_rounded, color: Color(0xFF38BDF8), size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Gunakan Lokasi GPS Saya',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Deteksi akurat koordinat satelit ponsel saat ini',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: Colors.white60,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+                      Text(
+                        'Gunung Populer',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _popularMountains.map((m) {
+                          return InkWell(
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              _loadWeather(
+                                cityName: m['name'] as String,
+                                lat: m['lat'] as double?,
+                                lon: m['lon'] as double?,
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.landscape_rounded, size: 14, color: Color(0xFF38BDF8)),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    m['name'] as String,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 18),
+                      Text(
+                        'Kota Populer',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _popularCities.map((city) {
+                          return InkWell(
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              _loadWeather(cityName: city);
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.location_city_rounded, size: 14, color: Color(0xFF38BDF8)),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    city,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );

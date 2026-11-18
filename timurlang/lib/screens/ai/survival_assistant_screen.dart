@@ -27,7 +27,7 @@ class _SurvivalAssistantScreenState extends State<SurvivalAssistantScreen> {
     'Fenomena Cuaca di Gunung',
     'Panduan Latihan Fisik',
     'Cara Booking Simaksi',
-    'Tebak-tebakan Santai',
+    'Penanganan Hipotermia',
     'Etika Leave No Trace',
     'Panduan P3K Lapangan',
   ];
@@ -317,28 +317,6 @@ class _SurvivalAssistantScreenState extends State<SurvivalAssistantScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildFormattedMessage(msg.text, msg.isUser),
-            if (!msg.isUser) ...[
-              const SizedBox(height: 10),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    msg.isFromCloud ? Icons.auto_awesome : Icons.offline_bolt_outlined,
-                    size: 12,
-                    color: msg.isFromCloud ? AppTheme.primary : AppTheme.warning,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    msg.isFromCloud ? 'Gemini Cloud AI' : 'Offline Engine',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: msg.isFromCloud ? AppTheme.primary : AppTheme.warning,
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ],
         ),
       ),

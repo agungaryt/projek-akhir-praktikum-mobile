@@ -37,6 +37,7 @@ class _MapScreenState extends State<MapScreen> {
   Mountain? _selectedMountain;
   HikingTrail? _highlightedTrail;
   bool _isLoading = true;
+  bool _showTrailPolylines = true;
 
   MapLayerType _selectedLayer = MapLayerType.standard;
 
@@ -794,16 +795,17 @@ class _MapScreenState extends State<MapScreen> {
               ),
 
               // Hiking Trails (Polylines)
-              PolylineLayer(
-                polylines: activeTrails.map((trail) {
-                  final isHighlighted = _highlightedTrail?.id == trail.id;
-                  return Polyline(
-                    points: trail.waypoints,
-                    strokeWidth: isHighlighted ? 6.0 : 4.0,
-                    color: trail.color,
-                  );
-                }).toList(),
-              ),
+              if (_showTrailPolylines)
+                PolylineLayer(
+                  polylines: activeTrails.map((trail) {
+                    final isHighlighted = _highlightedTrail?.id == trail.id;
+                    return Polyline(
+                      points: trail.waypoints,
+                      strokeWidth: isHighlighted ? 6.0 : 4.0,
+                      color: trail.color,
+                    );
+                  }).toList(),
+                ),
 
               // Mountain & Basecamp Markers
               MarkerLayer(
@@ -1098,6 +1100,32 @@ class _MapScreenState extends State<MapScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Toggle garis rute (Polyline)
+                FloatingActionButton.small(
+                  heroTag: 'toggle_route_fab',
+                  backgroundColor: _showTrailPolylines ? AppTheme.primary : AppTheme.surface,
+                  elevation: 3,
+                  tooltip: _showTrailPolylines ? 'Sembunyikan Garis Rute' : 'Tampilkan Garis Rute',
+                  onPressed: () {
+                    setState(() => _showTrailPolylines = !_showTrailPolylines);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          _showTrailPolylines
+                              ? 'Garis rute ditampilkan'
+                              : 'Garis rute disembunyikan (menampilkan jalur alami peta)',
+                        ),
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  child: Icon(
+                    _showTrailPolylines ? Icons.route : Icons.alt_route,
+                    color: _showTrailPolylines ? Colors.white : AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 // Layer button
                 FloatingActionButton.small(
                   heroTag: 'map_layer_fab',
