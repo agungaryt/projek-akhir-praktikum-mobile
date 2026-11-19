@@ -138,13 +138,23 @@ class _CourseFeedbackScreenState extends State<CourseFeedbackScreen> {
         : 'U';
     final ratingVal = fb.rating ?? 5;
 
+    // ==========================================================================
+    // 🎨 [2. UBAH WARNA CARD ULASAN MAHASISWA (CARD MAM**)]
+    // --------------------------------------------------------------------------
+    // Cara Ubah:
+    // - Warna Background Card: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+    // - Warna Garis Tepi (Border): Ganti `color: AppTheme.border` pada Border.all(...)
+    // - Warna Lingkaran Avatar Inisial: Ganti `backgroundColor: AppTheme.primaryGreen.withValues(...)`
+    // - Warna Badge "Mahasiswa": Ganti `color: AppTheme.primarySubtle` (baris di bawah)
+    // - Warna Kotak Balon Teks Ulasan: Ganti `color: AppTheme.surfaceSubtle` (baris di bawah)
+    // ==========================================================================
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border, width: 1),
+        border: Border.all(color: AppTheme.border, width: 1), // <-- UBAH BORDER KARTU DI SINI
         boxShadow: [
           BoxShadow(
             color: AppTheme.textPrimary.withValues(alpha: 0.04),
@@ -366,13 +376,22 @@ class _CourseFeedbackScreenState extends State<CourseFeedbackScreen> {
             ),
             const SizedBox(height: 24),
 
+            // ==========================================================================
+            // 🎨 [1. UBAH WARNA CARD BESAR KESAN DAN PESAN (FORM RATING & EVALUASI)]
+            // --------------------------------------------------------------------------
+            // Cara Ubah:
+            // - Warna Background Card: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+            // - Warna Garis Tepi (Border): Ganti `color: AppTheme.border` pada Border.all(...)
+            // - Warna Bintang Rating: Ganti `color: AppTheme.warningYellow` (contoh: Colors.amber)
+            // - Warna Tombol "Kirim Evaluasi": Ganti `backgroundColor: AppTheme.primaryGreen` (baris ~455)
+            // ==========================================================================
             // Form Card
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU BESAR DI SINI
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.border, width: 1),
+                border: Border.all(color: AppTheme.border, width: 1), // <-- UBAH BORDER KARTU BESAR DI SINI
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

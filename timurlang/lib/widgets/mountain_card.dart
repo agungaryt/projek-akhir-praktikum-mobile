@@ -46,12 +46,22 @@ class MountainCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      // ==========================================================================
+      // 🎨 [4. UBAH WARNA CARD DAFTAR GUNUNG (ITEM DAFTAR GUNUNG)]
+      // --------------------------------------------------------------------------
+      // Cara Ubah:
+      // - Warna Background Card: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+      // - Warna Garis Tepi (Border): Ganti `color: AppTheme.border` pada Border.all(...)
+      // - Warna Teks Nama Gunung: Ganti `color: AppTheme.textPrimary` (baris ~105)
+      // - Warna Badge "Buka" / "Tutup": Mengikuti `_getStatusColor()` (baris ~22)
+      // - Warna Garis Pembatas (Divider): Ganti `color: AppTheme.border` (baris ~140)
+      // ==========================================================================
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU GUNUNG DI SINI
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.border, width: 1.2),
+          border: Border.all(color: AppTheme.border, width: 1.2), // <-- UBAH BORDER KARTU GUNUNG DI SINI
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),

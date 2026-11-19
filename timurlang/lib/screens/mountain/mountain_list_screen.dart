@@ -125,6 +125,15 @@ class _MountainListScreenState extends State<MountainListScreen> {
                   ),
                   const SizedBox(height: 14),
                 ],
+                // ==========================================================================
+                // 🎨 [3. UBAH WARNA CARD CARI NAMA GUNUNG (SEARCH BAR)]
+                // --------------------------------------------------------------------------
+                // Cara Ubah:
+                // - Warna Background Bar: Ganti `fillColor: AppTheme.surface` (contoh: Colors.white)
+                // - Warna Garis Border: Ganti `borderSide: const BorderSide(color: AppTheme.border)`
+                // - Warna Ikon Kaca Pembesar: Ganti `color: AppTheme.primary` pada Icon(Icons.search_rounded)
+                // - Warna Kotak Ikon Filter (Kanan): Ganti `color: _showFilters ? ... : AppTheme.surfaceSubtle`
+                // ==========================================================================
                 // Search bar
                 TextField(
                   controller: _searchCtrl,
@@ -134,12 +143,26 @@ class _MountainListScreenState extends State<MountainListScreen> {
                     color: AppTheme.textPrimary,
                   ),
                   decoration: InputDecoration(
+                    filled: true,
+                    fillColor: AppTheme.surface, // <-- UBAH WARNA BACKGROUND SEARCH BAR DI SINI
                     hintText: 'Cari nama gunung...',
                     hintStyle: GoogleFonts.plusJakartaSans(
                       color: AppTheme.textSecondary.withValues(alpha: 0.7),
                       fontSize: 13.5,
                     ),
-                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppTheme.primary),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: AppTheme.border, width: 1.2), // <-- UBAH BORDER DI SINI
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: AppTheme.border, width: 1.2),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                    ),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppTheme.primary), // <-- UBAH WARNA IKON SEARCH
                     suffixIcon: GestureDetector(
                       onTap: () => setState(() => _showFilters = !_showFilters),
                       child: Container(

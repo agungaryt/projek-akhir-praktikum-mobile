@@ -437,6 +437,12 @@ class _BasecampDashboardScreenState extends State<BasecampDashboardScreen> {
                 const SizedBox(height: 20),
               ],
 
+              // ==========================================================================
+              // 🎨 [1. UBAH WARNA KOTAK PUTIH (BACKGROUND) 4 CARD UTAMA: ORANG, KUOTA, BUKA, SIMAKSI]
+              // --------------------------------------------------------------------------
+              // Setiap kartu memiliki parameter `cardColor: Colors.white` tepat di bawahnya.
+              // Ganti `Colors.white` dengan warna yang Anda inginkan (misal: Colors.grey.shade100, Color(0xFFF0FDF4), dll).
+              // ==========================================================================
               // Stat Cards (Refined Artisan Design System)
               Row(
                 children: [
@@ -445,8 +451,13 @@ class _BasecampDashboardScreenState extends State<BasecampDashboardScreen> {
                       'Pendaki di Jalur',
                       '$_activeHikers Orang',
                       Icons.hiking_rounded,
-                      AppTheme.primary,
+                      AppTheme.primary, // <-- UBAH WARNA IKON PENDAKI DI JALUR
                       subtitle: '$_activePermitsCount Rombongan',
+                      // ======================================================================
+                      // 🎨 [GANTI WARNA KOTAK PUTIH KARTU PENDAKI DI JALUR]
+                      // ======================================================================
+                      cardColor: Colors.white, // <-- 🎨 GANTI WARNA KOTAK PUTIH BACKGROUND DI SINI
+                      borderColor: AppTheme.border, // <-- 🎨 GANTI WARNA GARIS BORDER DI SINI
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -455,8 +466,13 @@ class _BasecampDashboardScreenState extends State<BasecampDashboardScreen> {
                       'Sisa Kuota Hari Ini',
                       '${_basecampPost?.sisaKuotaHariIni ?? 0} Orang',
                       Icons.people_alt_rounded,
-                      const Color(0xFF2E6B4E),
+                      const Color(0xFF2E6B4E), // <-- UBAH WARNA IKON SISA KUOTA
                       subtitle: 'Kapasitas ${_basecampPost?.kuotaHarian ?? 100}',
+                      // ======================================================================
+                      // 🎨 [GANTI WARNA KOTAK PUTIH KARTU SISA KUOTA]
+                      // ======================================================================
+                      cardColor: Colors.white, // <-- 🎨 GANTI WARNA KOTAK PUTIH BACKGROUND DI SINI
+                      borderColor: AppTheme.border, // <-- 🎨 GANTI WARNA GARIS BORDER DI SINI
                     ),
                   ),
                 ],
@@ -469,8 +485,13 @@ class _BasecampDashboardScreenState extends State<BasecampDashboardScreen> {
                       'Status Jalur',
                       _basecampPost?.statusJalur ?? 'Buka',
                       _basecampPost?.isBuka == true ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                      _basecampPost?.isBuka == true ? const Color(0xFF15803D) : AppTheme.error,
+                      _basecampPost?.isBuka == true ? const Color(0xFF15803D) : AppTheme.error, // <-- UBAH WARNA IKON STATUS JALUR
                       subtitle: _basecampPost?.isBuka == true ? 'Jalur Dibuka' : 'Jalur Ditutup',
+                      // ======================================================================
+                      // 🎨 [GANTI WARNA KOTAK PUTIH KARTU STATUS JALUR]
+                      // ======================================================================
+                      cardColor: Colors.white, // <-- 🎨 GANTI WARNA KOTAK PUTIH BACKGROUND DI SINI
+                      borderColor: AppTheme.border, // <-- 🎨 GANTI WARNA GARIS BORDER DI SINI
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -479,8 +500,13 @@ class _BasecampDashboardScreenState extends State<BasecampDashboardScreen> {
                       'Tarif SIMAKSI',
                       'Rp ${(_basecampPost?.hargaSimaksi ?? 15000).toInt()}',
                       Icons.payments_rounded,
-                      const Color(0xFF334155),
+                      const Color(0xFF334155), // <-- UBAH WARNA IKON TARIF SIMAKSI
                       subtitle: 'per orang',
+                      // ======================================================================
+                      // 🎨 [GANTI WARNA KOTAK PUTIH KARTU TARIF SIMAKSI]
+                      // ======================================================================
+                      cardColor: Colors.white, // <-- 🎨 GANTI WARNA KOTAK PUTIH BACKGROUND DI SINI
+                      borderColor: AppTheme.border, // <-- 🎨 GANTI WARNA GARIS BORDER DI SINI
                     ),
                   ),
                 ],
@@ -497,35 +523,61 @@ class _BasecampDashboardScreenState extends State<BasecampDashboardScreen> {
                 ),
               ),
               const SizedBox(height: 12),
+              // ==========================================================================
+              // 🎨 [2. GANTI WARNA KOTAK PUTIH (BACKGROUND) CARD VERIFIKASI TIKET SIMAKSI]
+              // --------------------------------------------------------------------------
+              // Ganti `Colors.white` pada `cardColor` di bawah untuk mengubah warna kotak putih kartu ini!
+              // ==========================================================================
               _actionCard(
                 'Verifikasi Tiket Simaksi',
                 'Pindai QR check-in pendaki & kurangi kuota otomatis secara realtime',
                 Icons.qr_code_scanner,
-                AppTheme.primary,
+                AppTheme.primary, // <-- UBAH WARNA IKON VERIFIKASI DI SINI
                 () => Navigator.pushNamed(context, AppRoutes.ticketVerify).then((_) => _loadData()),
+                cardColor: Colors.white, // <-- 🎨 GANTI WARNA KOTAK PUTIH BACKGROUND DI SINI (Contoh: Colors.white / Colors.amber.shade50 / Color(0xFFF0FDF4))
+                borderColor: AppTheme.border, // <-- 🎨 GANTI WARNA GARIS BORDER DI SINI
               ),
               const SizedBox(height: 12),
+              // ==========================================================================
+              // 🎨 [3. GANTI WARNA KOTAK PUTIH (BACKGROUND) CARD MONITOR PENDAKI DI JALUR]
+              // --------------------------------------------------------------------------
+              // Ganti `Colors.white` pada `cardColor` di bawah untuk mengubah warna kotak putih kartu ini!
+              // ==========================================================================
               _actionCard(
                 'Monitor Pendaki di Jalur',
                 'Pantau seluruh pendaki ($_activeHikers orang) yang sedang aktif di jalur',
                 Icons.radar,
-                AppTheme.secondary,
+                AppTheme.secondary, // <-- UBAH WARNA IKON MONITOR DI JALUR DI SINI
                 () => Navigator.pushNamed(context, AppRoutes.hikerMonitor).then((_) => _loadData()),
+                cardColor: Colors.white, // <-- 🎨 GANTI WARNA KOTAK PUTIH BACKGROUND DI SINI (Contoh: Colors.white / Colors.blue.shade50 / Color(0xFFF8FAFC))
+                borderColor: AppTheme.border, // <-- 🎨 GANTI WARNA GARIS BORDER DI SINI
               ),
               const SizedBox(height: 12),
+              // ==========================================================================
+              // 🎨 [4. GANTI WARNA KOTAK PUTIH (BACKGROUND) CARD PENGATURAN JALUR & SIMAKSI]
+              // --------------------------------------------------------------------------
+              // Ganti `Colors.white` pada `cardColor` di bawah untuk mengubah warna kotak putih kartu ini!
+              // ==========================================================================
               _actionCard(
                 'Pengaturan Jalur & SIMAKSI',
                 'Atur status Buka/Tutup, kuota harian, sisa kuota, dan tarif SIMAKSI basecamp',
                 Icons.tune,
-                AppTheme.primary,
+                AppTheme.primary, // <-- UBAH WARNA IKON PENGATURAN JALUR DI SINI
                 _showBasecampSettingsModal,
+                cardColor: Colors.white, // <-- 🎨 GANTI WARNA KOTAK PUTIH BACKGROUND DI SINI (Contoh: Colors.white / Colors.green.shade50 / Color(0xFFF0FDF4))
+                borderColor: AppTheme.border, // <-- 🎨 GANTI WARNA GARIS BORDER DI SINI
               ),
               const SizedBox(height: 12),
+              // ==========================================================================
+              // 🎨 [5. GANTI WARNA KOTAK PUTIH (BACKGROUND) CARD MANAJEMEN RESERVASI & PEMBATALAN]
+              // --------------------------------------------------------------------------
+              // Ganti `Colors.white` pada `cardColor` di bawah untuk mengubah warna kotak putih kartu ini!
+              // ==========================================================================
               _actionCard(
                 'Manajemen Reservasi & Pembatalan',
                 'Kebijakan resmi pembatalan basecamp (opsi Refund 100% / Reschedule) & transfer pengembalian dana',
                 Icons.assignment_late_outlined,
-                const Color(0xFFD97706),
+                const Color(0xFFD97706), // <-- UBAH WARNA IKON MANAJEMEN RESERVASI DI SINI
                 () {
                   if (_basecampPost == null) return;
                   Navigator.push(
@@ -537,13 +589,20 @@ class _BasecampDashboardScreenState extends State<BasecampDashboardScreen> {
                     ),
                   ).then((_) => _loadData());
                 },
+                cardColor: Colors.white, // <-- 🎨 GANTI WARNA KOTAK PUTIH BACKGROUND DI SINI (Contoh: Colors.white / Colors.orange.shade50 / Color(0xFFFFFBEB))
+                borderColor: AppTheme.border, // <-- 🎨 GANTI WARNA GARIS BORDER DI SINI
               ),
               const SizedBox(height: 12),
+              // ==========================================================================
+              // 🎨 [6. GANTI WARNA KOTAK PUTIH (BACKGROUND) CARD PENGATURAN TITIK POS JALUR]
+              // --------------------------------------------------------------------------
+              // Ganti `Colors.white` pada `cardColor` di bawah untuk mengubah warna kotak putih kartu ini!
+              // ==========================================================================
               _actionCard(
                 'Pengaturan Titik Pos Jalur',
                 'Input & atur titik checkpoint, shelter, elevasi MDPL, dan sumber air jalur ini',
                 Icons.add_location_alt_outlined,
-                AppTheme.accentOrange,
+                AppTheme.accentOrange, // <-- UBAH WARNA IKON TITIK POS DI SINI
                 () {
                   if (_basecampPost == null) return;
                   Navigator.push(
@@ -556,6 +615,8 @@ class _BasecampDashboardScreenState extends State<BasecampDashboardScreen> {
                     ),
                   ).then((_) => _loadData());
                 },
+                cardColor: Colors.white, // <-- 🎨 GANTI WARNA KOTAK PUTIH BACKGROUND DI SINI (Contoh: Colors.white / Colors.deepOrange.shade50 / Color(0xFFFFF7ED))
+                borderColor: AppTheme.border, // <-- 🎨 GANTI WARNA GARIS BORDER DI SINI
               ),
             ],
           ),
@@ -564,13 +625,31 @@ class _BasecampDashboardScreenState extends State<BasecampDashboardScreen> {
     );
   }
 
-  Widget _statCard(String title, String value, IconData icon, Color color, {String? subtitle}) {
+  // ==========================================================================
+  // 🎨 [WIDGET PEMBUAT 4 CARD UTAMA: ORANG, KUOTA, BUKA, SIMAKSI]
+  // --------------------------------------------------------------------------
+  // Cara Ubah:
+  // - Warna Background Card: Diatur lewat parameter `cardColor` (default: AppTheme.surface / putih)
+  // - Warna Garis Border: Diatur lewat parameter `borderColor` (default: color.withValues(alpha: 0.18))
+  // - Warna Kotak Ikon: Ganti `color: color.withValues(alpha: 0.12)`
+  // - Warna Teks Angka Nilai (Value): Ganti `color: AppTheme.textPrimary` (baris ~665)
+  // - Warna Teks Judul (Title): Ganti `color: AppTheme.textSecondary` (baris ~675)
+  // ==========================================================================
+  Widget _statCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color, {
+    String? subtitle,
+    Color? cardColor,
+    Color? borderColor,
+  }) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: cardColor ?? AppTheme.surface, // <-- 🎨 UBAH WARNA KOTAK BACKGROUND DI SINI (Default Putih)
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.18), width: 1.2),
+        border: Border.all(color: borderColor ?? color.withValues(alpha: 0.18), width: 1.2), // <-- 🎨 UBAH WARNA GARIS BORDER
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.05),
@@ -1063,15 +1142,34 @@ class _BasecampDashboardScreenState extends State<BasecampDashboardScreen> {
     );
   }
 
-  Widget _actionCard(String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+  // ==========================================================================
+  // 🎨 [WIDGET PEMBUAT SELURUH CARD OPERASIONAL BASECAMP (ACTION CARDS)]
+  // --------------------------------------------------------------------------
+  // Mengatur tampilan seluruh card menu di bawah "Operasional Basecamp":
+  // - Warna Background Card: Diatur lewat parameter `cardColor` (default: AppTheme.surface / putih)
+  // - Warna Garis Border: Diatur lewat parameter `borderColor` (default: AppTheme.border)
+  // - Warna Kotak Ikon Kiri: Ganti `color: color.withValues(alpha: 0.12)`
+  // - Warna Teks Judul Menu: Ganti `color: AppTheme.textPrimary` pada Text(title)
+  // - Warna Teks Deskripsi: Ganti `color: AppTheme.textSecondary` pada Text(subtitle)
+  // - Warna Ikon Panah Kanan: Ganti `color: AppTheme.textSecondary.withValues(...)`
+  // ==========================================================================
+  Widget _actionCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    VoidCallback onTap, {
+    Color? cardColor,
+    Color? borderColor,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: cardColor ?? AppTheme.surface, // <-- 🎨 UBAH WARNA KOTAK BACKGROUND DI SINI (Default Putih)
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.border, width: 1.2),
+          border: Border.all(color: borderColor ?? AppTheme.border, width: 1.2), // <-- 🎨 UBAH WARNA GARIS BORDER
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
