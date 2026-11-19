@@ -1,6 +1,13 @@
-// ============================================
-// TimurLang - Weather Service (OpenWeatherMap API)
-// ============================================
+// ============================================================================
+// ⛅ [KODINGAN LAYANAN CUACA PENDAKIAN - OPENWEATHERMAP API & GPS GEOLOCATOR]
+// ----------------------------------------------------------------------------
+// File: weather_service.dart
+// Penjelasan:
+// - Mengintegrasikan OpenWeatherMap REST API untuk monitoring kondisi cuaca gunung
+// - Membaca sensor GPS perangkat (geolocator) untuk koordinat real-time pendaki
+// - Mengambil data cuaca real-time (/weather) dan prakiraan cuaca 5 hari (/forecast)
+// - Menyediakan fitur deteksi dini peringatan badai (Storm Warning) untuk keselamatan
+// ============================================================================
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -263,11 +270,21 @@ class WeatherService {
   static final WeatherService instance = WeatherService._internal();
   WeatherService._internal();
 
-  // OpenWeatherMap API Key
+  // ==========================================================================
+  // 🔑 [KODINGAN OPENWEATHERMAP: API KEY & ENDPOINT RESMI]
+  // --------------------------------------------------------------------------
+  // - Base URL: https://api.openweathermap.org/data/2.5
+  // - API Key terdaftar untuk TimurLang Weather Service
+  // ==========================================================================
   static const String _apiKey = '918bb744f0079b7ad28f2a9f2ed1ee56';
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5';
 
-  /// Determine and request location permissions, return current position with high accuracy
+  // ==========================================================================
+  // 📍 [KODINGAN SENSOR GPS: GEOLOCATOR UNTUK KOORDINAT LOKASI PENDAKI]
+  // --------------------------------------------------------------------------
+  // - Memeriksa status GPS & izin lokasi (LocationPermission)
+  // - Mengambil koordinat Lintang (Latitude) & Bujur (Longitude) akurasi tinggi
+  // ==========================================================================
   Future<Position> _getCurrentPosition() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -307,7 +324,12 @@ class WeatherService {
     }
   }
 
-  /// Get current weather from OpenWeatherMap using device GPS location
+  // ==========================================================================
+  // 🌦️ [KODINGAN OPENWEATHERMAP: REQUEST CUACA REALTIME (/weather)]
+  // --------------------------------------------------------------------------
+  // Mengambil suhu (°C), kelembaban (%), tekanan (hPa), kecepatan angin (km/h),
+  // jarak pandang, dan peringatan badai berdasarkan koordinat GPS
+  // ==========================================================================
   Future<WeatherData> getCurrentWeather(double? lat, double? lon) async {
     double latitude;
     double longitude;
@@ -414,7 +436,12 @@ class WeatherService {
     }
   }
 
-  /// Get 5-day forecast from OpenWeatherMap (3-hour intervals → aggregated per day)
+  // ==========================================================================
+  // 📅 [KODINGAN OPENWEATHERMAP: REQUEST PRAKIRAAN CUACA 5 HARI (/forecast)]
+  // --------------------------------------------------------------------------
+  // Mengambil prediksi cuaca interval 3 jam untuk 5 hari ke depan
+  // dan diolah menjadi rangkuman harian suhu min/max & peluang hujan (POP)
+  // ==========================================================================
   Future<List<WeatherForecast>> getForecast(double? lat, double? lon) async {
     double latitude;
     double longitude;

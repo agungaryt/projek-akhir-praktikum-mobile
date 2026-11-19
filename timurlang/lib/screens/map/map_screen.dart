@@ -1,8 +1,16 @@
-// ============================================
-// TimurLang - Interactive Real Map Screen
-// Powered by flutter_map & OpenStreetMap / OpenTopoMap / Esri Satellite
-// Menampilkan seluruh jalur resmi & basecamp untuk 46 gunung di Indonesia
-// ============================================
+// ============================================================================
+// 🗺️ [KODINGAN PETA INTERAKTIF: FLUTTER_MAP & OPENSTREETMAP (OSM)]
+// ----------------------------------------------------------------------------
+// File: map_screen.dart
+// Penjelasan:
+// - Menggunakan package 'flutter_map' dan 'latlong2'
+// - Menghubungkan 3 penyedia Tile Peta:
+//   1. OpenStreetMap (OSM) - Peta jalan & wilayah standar
+//   2. OpenTopoMap - Peta topografi, kontur ketinggian, dan medan terjal gunung
+//   3. Esri ArcGIS World Imagery - Citra satelit asli bentang alam bumi
+// - Menampilkan PolylineLayer untuk jalur pendakian resmi 46 gunung di Indonesia
+// - Menampilkan MarkerLayer untuk titik pos basecamp, shelter, pos air & puncak
+// ============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -41,18 +49,25 @@ class _MapScreenState extends State<MapScreen> {
 
   MapLayerType _selectedLayer = MapLayerType.standard;
 
-  // Layer tile configurations
+  // ==========================================================================
+  // 🌍 [KODINGAN TILE SERVER OPENSTREETMAP, OPENTOPOMAP & ESRI SATELLITE]
+  // --------------------------------------------------------------------------
+  // Mengonfigurasi URL Tile Provider untuk dirender oleh FlutterMap
+  // ==========================================================================
   final Map<MapLayerType, Map<String, dynamic>> _layerConfigs = {
+    // 1. OPENSTREETMAP (OSM) - Peta Vektor / Jalan Standar
     MapLayerType.standard: {
       'name': 'Peta Standar (OSM)',
-      'url': 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      'url': 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', // <-- URL TILE RESMI OPENSTREETMAP
       'icon': Icons.map_outlined,
     },
+    // 2. OPENTOPOMAP - Peta Kontur Elevasi Pendakian
     MapLayerType.topographic: {
       'name': 'Topografi & Kontur',
-      'url': 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+      'url': 'https://tile.opentopomap.org/{z}/{x}/{y}.png', // <-- URL TILE OPENTOPOMAP
       'icon': Icons.terrain_outlined,
     },
+    // 3. ESRI ARCGIS - Citra Satelit Bumi Asli
     MapLayerType.satellite: {
       'name': 'Citra Satelit Asli',
       'url': 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -777,7 +792,11 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Stack(
         children: [
-          // FlutterMap
+          // ==================================================================
+          // 🗺️ [KODINGAN FLUTTER_MAP: KANVAS PETA DIGITAL UTAMA]
+          // ------------------------------------------------------------------
+          // Mengatur koordinat tengah awal (LatLng Semeru/Bromo) & tingkat zoom
+          // ==================================================================
           FlutterMap(
             mapController: _mapController,
             options: const MapOptions(
@@ -787,14 +806,18 @@ class _MapScreenState extends State<MapScreen> {
               maxZoom: 18.0,
             ),
             children: [
-              // Tile Layer
+              // ==============================================================
+              // 🌐 [1. TILE LAYER: RENDERING UBIN OPENSTREETMAP / TOPO / SATELIT]
+              // ==============================================================
               TileLayer(
                 urlTemplate: activeTileUrl,
                 userAgentPackageName: 'com.timurlang.app',
                 maxZoom: 18,
               ),
 
-              // Hiking Trails (Polylines)
+              // ==============================================================
+              // 📍 [2. POLYLINE LAYER: MENGGAMBAR JALUR PENDAKIAN GUNUNG]
+              // ==============================================================
               if (_showTrailPolylines)
                 PolylineLayer(
                   polylines: activeTrails.map((trail) {
@@ -807,7 +830,9 @@ class _MapScreenState extends State<MapScreen> {
                   }).toList(),
                 ),
 
-              // Mountain & Basecamp Markers
+              // ==============================================================
+              // 📌 [3. MARKER LAYER: TITIK PUNCAK & BASECAMP PENDAKIAN]
+              // ==============================================================
               MarkerLayer(
                 markers: [
                   // 1. Mountain Peak Markers
