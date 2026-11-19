@@ -1,7 +1,13 @@
-// ============================================
-// TimurLang - Blockchain Service (Polygon Amoy Testnet)
-// Real Public Blockchain Integration via Web3 API
-// ============================================
+// ============================================================================
+// ⛓️ [KODINGAN BLOCKCHAIN - VERIFIKASI TIKET SIMAKSI (WEB3 / POLYGON AMOY)]
+// ----------------------------------------------------------------------------
+// File: blockchain_service.dart
+// Penjelasan:
+// - Menggunakan package 'web3dart' untuk koneksi ke jaringan Polygon Amoy Testnet (EVM)
+// - Melakukan enkripsi payload tiket SIMAKSI dan broadcast transaksi on-chain
+// - Menghasilkan Transaction Hash (TxHash) publik yang permanen & tidak dapat dipalsukan (tamper-proof)
+// - Memungkinkan verifikasi keaslian izin pendakian melalui Polygonscan Explorer
+// ============================================================================
 
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -37,6 +43,9 @@ class BlockchainService {
   static const String relayerAddress = '0x5c857A26C1e490f3d7C6d2F6EE27552fc456661D';
   static const String relayerPrivateKey = 'c8290d6ec6fbe7a754a2df704487dbe5e73ce5cddf06d971f7d45650f03d4fc6';
 
+  // ==========================================================================
+  // 🔗 [KODINGAN TRANSAKSI BLOCKCHAIN: BROADCAST TIKET ON-CHAIN KE POLYGON]
+  // ==========================================================================
   /// Broadcast data tiket SIMAKSI ke jaringan Polygon Amoy Testnet.
   /// Menghasilkan Transaction Hash (TxHash) publik yang tercatat di internet.
   Future<String?> broadcastTicketToPolygon({

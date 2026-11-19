@@ -1,7 +1,14 @@
-// ============================================
-// TimurLang - Universal AI Chatbot Service
-// Intelligent, multi-domain conversational assistant
-// ============================================
+// ============================================================================
+// 🤖 [KODINGAN ARTIFICIAL INTELLIGENCE (AI) - GEMINI & GROQ LLM SERVICE]
+// ----------------------------------------------------------------------------
+// File: gemini_service.dart
+// Penjelasan:
+// - Mengintegrasikan model AI cerdas (Google Gemini AI & Groq LLaMA)
+// - Berfungsi sebagai asisten virtual pintar pendaki gunung (Survival Assistant)
+// - Memberikan respon otomatis terkait: P3K darurat hipotermia, navigasi alam liar,
+//   manajemen logistik, analisis prakiraan cuaca, serta etika pendakian
+// - Menyediakan fallback cerdas secara lokal jika perangkat sedang offline di gunung
+// ============================================================================
 
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -159,6 +166,9 @@ class GeminiService {
     }
   }
 
+  // ==========================================================================
+  // 🧠 [KODINGAN UTAMA AI: PENGIRIMAN PROMPT KE CLOUD LLM / OFFLINE FALLBACK]
+  // ==========================================================================
   /// Send message to Universal Assistant
   Future<String> sendMessage(String message) async {
     // Add user message

@@ -5,6 +5,7 @@
 // ============================================
 
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -43,7 +44,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _pages = [
-      _DashboardPage(onTabChange: (index) => setState(() => _currentIndex = index)),
+      _DashboardPage(
+        onTabChange: (index) => setState(() => _currentIndex = index),
+      ),
       const MountainListScreen(embedded: true),
       const SimaksiTicketScreen(embedded: true),
       const CourseFeedbackScreen(embedded: true),
@@ -55,12 +58,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: _buildAuraBottomBar(),
-      floatingActionButton: _currentIndex == 0 ? const _AnimatedTbotBubble() : null,
+      floatingActionButton: _currentIndex == 0
+          ? const _AnimatedTbotBubble()
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
@@ -152,10 +154,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   isSelected ? activeIcon : icon,
                   color: isLogout
                       ? AppTheme.error
-                      : (isSelected ? AppTheme.primary : AppTheme.textSecondary),
+                      : (isSelected
+                            ? AppTheme.primary
+                            : AppTheme.textSecondary),
                   size: 22,
                 ),
-            if (!iconOnly) ...[  
+            if (!iconOnly) ...[
               const SizedBox(height: 3),
               Text(
                 label,
@@ -164,7 +168,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isLogout
                       ? AppTheme.error
-                      : (isSelected ? AppTheme.primary : AppTheme.textSecondary),
+                      : (isSelected
+                            ? AppTheme.primary
+                            : AppTheme.textSecondary),
                 ),
               ),
             ],
@@ -173,7 +179,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 
   void _showLogoutDialog() {
     showDialog(
@@ -295,8 +300,10 @@ class _DashboardPageState extends State<_DashboardPage> {
       }
     });
     // Timer cadangan: periksa ulang setiap 10 detik
-    _connectivityTimer =
-        Timer.periodic(const Duration(seconds: 10), (timer) => _checkConnection());
+    _connectivityTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (timer) => _checkConnection(),
+    );
   }
 
   @override
@@ -338,7 +345,10 @@ class _DashboardPageState extends State<_DashboardPage> {
           final desc = (m.deskripsi ?? '').toLowerCase();
           final grade = m.tingkatBahaya.toLowerCase();
           final elev = '${m.elevasiMdpl}';
-          return name.contains(q) || desc.contains(q) || grade.contains(q) || elev.contains(q);
+          return name.contains(q) ||
+              desc.contains(q) ||
+              grade.contains(q) ||
+              elev.contains(q);
         }).toList();
       }
     });
@@ -362,7 +372,9 @@ class _DashboardPageState extends State<_DashboardPage> {
       }
     } catch (_) {
       try {
-        final fallback = await WeatherService.instance.getWeatherByCity('Magelang,ID');
+        final fallback = await WeatherService.instance.getWeatherByCity(
+          'Magelang,ID',
+        );
         if (mounted) {
           setState(() {
             _weatherData = fallback;
@@ -383,10 +395,7 @@ class _DashboardPageState extends State<_DashboardPage> {
     final syncResult = await SyncService.instance.syncAll();
 
     // 2. Refresh Cuaca & Koneksi
-    await Future.wait([
-      _fetchWeather(),
-      _checkConnection(),
-    ]);
+    await Future.wait([_fetchWeather(), _checkConnection()]);
 
     // 3. Refresh Daftar Tiket, Gunung, & Rekomendasi TimurLang
     if (mounted) {
@@ -403,7 +412,9 @@ class _DashboardPageState extends State<_DashboardPage> {
           content: Row(
             children: [
               Icon(
-                isSuccess ? Icons.cloud_done_rounded : Icons.info_outline_rounded,
+                isSuccess
+                    ? Icons.cloud_done_rounded
+                    : Icons.info_outline_rounded,
                 color: Colors.white,
                 size: 20,
               ),
@@ -421,7 +432,9 @@ class _DashboardPageState extends State<_DashboardPage> {
           ),
           backgroundColor: isSuccess ? AppTheme.primary : AppTheme.warning,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -460,10 +473,7 @@ class _DashboardPageState extends State<_DashboardPage> {
                       height: 44,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppTheme.primary,
-                          width: 1.8,
-                        ),
+                        border: Border.all(color: AppTheme.primary, width: 1.8),
                         boxShadow: [
                           BoxShadow(
                             color: AppTheme.textPrimary.withValues(alpha: 0.08),
@@ -473,18 +483,23 @@ class _DashboardPageState extends State<_DashboardPage> {
                         ],
                       ),
                       child: ClipOval(
-                        child: user?.fotoProfilUrl != null && user!.fotoProfilUrl!.isNotEmpty
+                        child:
+                            user?.fotoProfilUrl != null &&
+                                user!.fotoProfilUrl!.isNotEmpty
                             ? Image(
-                                image: ImageHelper.getImageProvider(user.fotoProfilUrl)!,
+                                image: ImageHelper.getImageProvider(
+                                  user.fotoProfilUrl,
+                                )!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  color: AppTheme.primarySubtle,
-                                  child: const Icon(
-                                    Icons.person_rounded,
-                                    color: AppTheme.primary,
-                                    size: 24,
-                                  ),
-                                ),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      color: AppTheme.primarySubtle,
+                                      child: const Icon(
+                                        Icons.person_rounded,
+                                        color: AppTheme.primary,
+                                        size: 24,
+                                      ),
+                                    ),
                               )
                             : Container(
                                 color: AppTheme.primarySubtle,
@@ -531,15 +546,20 @@ class _DashboardPageState extends State<_DashboardPage> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: _isOnline ? AppTheme.primarySubtle : const Color(0xFFFEE2E2),
+                      color: _isOnline
+                          ? AppTheme.primarySubtle
+                          : const Color(0xFFFEE2E2),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: _isOnline ? const Color(0xFFD4E0D2) : const Color(0xFFFCA5A5),
+                        color: _isOnline
+                            ? const Color(0xFFD4E0D2)
+                            : const Color(0xFFFCA5A5),
                         width: 1.2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: (_isOnline ? AppTheme.primary : AppTheme.error).withValues(alpha: 0.1),
+                          color: (_isOnline ? AppTheme.primary : AppTheme.error)
+                              .withValues(alpha: 0.1),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -557,6 +577,14 @@ class _DashboardPageState extends State<_DashboardPage> {
               ),
               const SizedBox(height: 16),
 
+              // ==========================================================================
+              // 🎨 [1. UBAH WARNA INPUTAN FILTER PENCARIAN]
+              // --------------------------------------------------------------------------
+              // Cara Ubah:
+              // - Warna Background Bar: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+              // - Warna Garis Border: Ganti `AppTheme.primary` & `AppTheme.border`
+              // - Warna Teks Placeholder: Ganti `color: AppTheme.textSecondary` pada hintStyle
+              // ==========================================================================
               // 2. Searchbar Cari Gunung (Fungsional, Realtime, & Interaktif)
               Container(
                 width: double.infinity,
@@ -564,7 +592,9 @@ class _DashboardPageState extends State<_DashboardPage> {
                   color: AppTheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: _searchFocus.hasFocus ? AppTheme.primary : AppTheme.border,
+                    color: _searchFocus.hasFocus
+                        ? AppTheme.primary
+                        : AppTheme.border,
                     width: _searchFocus.hasFocus ? 1.5 : 1.2,
                   ),
                   boxShadow: [
@@ -605,10 +635,18 @@ class _DashboardPageState extends State<_DashboardPage> {
                       color: AppTheme.textSecondary.withValues(alpha: 0.65),
                       fontWeight: FontWeight.w400,
                     ),
-                    prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primary, size: 22),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: AppTheme.primary,
+                      size: 22,
+                    ),
                     suffixIcon: _searchCtrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 18, color: AppTheme.textSecondary),
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: AppTheme.textSecondary,
+                            ),
                             onPressed: () {
                               _searchCtrl.clear();
                               _onSearchChanged('');
@@ -616,7 +654,10 @@ class _DashboardPageState extends State<_DashboardPage> {
                           )
                         : null,
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 13,
+                    ),
                   ),
                 ),
               ),
@@ -689,14 +730,19 @@ class _DashboardPageState extends State<_DashboardPage> {
                     return const Center(
                       child: Padding(
                         padding: EdgeInsets.all(24),
-                        child: CircularProgressIndicator(color: AppTheme.primary),
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primary,
+                        ),
                       ),
                     );
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 28,
+                        horizontal: 20,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(24),
@@ -710,7 +756,10 @@ class _DashboardPageState extends State<_DashboardPage> {
                             decoration: BoxDecoration(
                               color: AppTheme.primarySubtle,
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFFD4E0D2), width: 1),
+                              border: Border.all(
+                                color: const Color(0xFFD4E0D2),
+                                width: 1,
+                              ),
                             ),
                             child: const Icon(
                               Icons.confirmation_num_outlined,
@@ -793,7 +842,9 @@ class _DashboardPageState extends State<_DashboardPage> {
             children: [
               Icon(
                 isNight ? Icons.nights_stay_rounded : Icons.wb_twilight_rounded,
-                color: isNight ? const Color(0xFF38BDF8) : const Color(0xFFF59E0B),
+                color: isNight
+                    ? const Color(0xFF38BDF8)
+                    : const Color(0xFFF59E0B),
                 size: 20,
               ),
               const SizedBox(width: 10),
@@ -833,14 +884,18 @@ class _DashboardPageState extends State<_DashboardPage> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isNight ? const Color(0xFF38BDF8) : const Color(0xFFFDE68A),
+                    color: isNight
+                        ? const Color(0xFF38BDF8)
+                        : const Color(0xFFFDE68A),
                   ),
                 ),
                 const SizedBox(width: 4),
                 Icon(
                   Icons.arrow_forward_rounded,
                   size: 13,
-                  color: isNight ? const Color(0xFF38BDF8) : const Color(0xFFFDE68A),
+                  color: isNight
+                      ? const Color(0xFF38BDF8)
+                      : const Color(0xFFFDE68A),
                 ),
               ],
             ),
@@ -888,7 +943,11 @@ class _DashboardPageState extends State<_DashboardPage> {
                     color: AppTheme.primarySubtle,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.shield_rounded, color: AppTheme.primary, size: 24),
+                  child: const Icon(
+                    Icons.shield_rounded,
+                    color: AppTheme.primary,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -948,11 +1007,15 @@ class _DashboardPageState extends State<_DashboardPage> {
                   backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
                 child: Text(
                   'Saya Mengerti',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -1026,7 +1089,11 @@ class _DashboardPageState extends State<_DashboardPage> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.search_rounded, size: 18, color: AppTheme.primary),
+                  const Icon(
+                    Icons.search_rounded,
+                    size: 18,
+                    color: AppTheme.primary,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     'Hasil Pencarian',
@@ -1110,11 +1177,17 @@ class _DashboardPageState extends State<_DashboardPage> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _searchResults.length > 5 ? 5 : _searchResults.length,
-              separatorBuilder: (context, index) => const Divider(color: AppTheme.border, height: 16),
+              separatorBuilder: (context, index) =>
+                  const Divider(color: AppTheme.border, height: 16),
               itemBuilder: (context, index) {
                 final mountain = _searchResults[index];
-                final imageProvider = ImageHelper.getImageProvider(mountain.fotoUrl, mountain.namaGunung) ??
-                    const AssetImage('assets/images/background_mount.png') as ImageProvider;
+                final imageProvider =
+                    ImageHelper.getImageProvider(
+                      mountain.fotoUrl,
+                      mountain.namaGunung,
+                    ) ??
+                    const AssetImage('assets/images/background_mount.png')
+                        as ImageProvider;
                 final isClosed = mountain.statusJalur == 'Tutup';
 
                 return InkWell(
@@ -1140,10 +1213,15 @@ class _DashboardPageState extends State<_DashboardPage> {
                             child: Image(
                               image: imageProvider,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: AppTheme.primarySubtle,
-                                child: const Icon(Icons.terrain_rounded, color: AppTheme.primary, size: 24),
-                              ),
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                    color: AppTheme.primarySubtle,
+                                    child: const Icon(
+                                      Icons.terrain_rounded,
+                                      color: AppTheme.primary,
+                                      size: 24,
+                                    ),
+                                  ),
                             ),
                           ),
                         ),
@@ -1177,7 +1255,11 @@ class _DashboardPageState extends State<_DashboardPage> {
                                   const SizedBox(width: 6),
                                   Text(
                                     '•',
-                                    style: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5)),
+                                    style: TextStyle(
+                                      color: AppTheme.textSecondary.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
@@ -1202,7 +1284,10 @@ class _DashboardPageState extends State<_DashboardPage> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: isClosed
                                     ? AppTheme.error.withValues(alpha: 0.12)
@@ -1214,7 +1299,9 @@ class _DashboardPageState extends State<_DashboardPage> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: isClosed ? AppTheme.error : AppTheme.success,
+                                  color: isClosed
+                                      ? AppTheme.error
+                                      : AppTheme.success,
                                 ),
                               ),
                             ),
@@ -1243,7 +1330,9 @@ class _DashboardPageState extends State<_DashboardPage> {
                 },
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppTheme.primary, width: 1.2),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                 ),
                 child: Row(
@@ -1258,7 +1347,11 @@ class _DashboardPageState extends State<_DashboardPage> {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Icon(Icons.arrow_forward_rounded, size: 14, color: AppTheme.primary),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 14,
+                      color: AppTheme.primary,
+                    ),
                   ],
                 ),
               ),
@@ -1357,13 +1450,18 @@ class _DashboardPageState extends State<_DashboardPage> {
 
   /// Kartu Carousel Destinasi Gunung
   Widget _buildMountainCarouselCard(Mountain mountain) {
-    final imageProvider = ImageHelper.getImageProvider(mountain.fotoUrl, mountain.namaGunung) ??
+    final imageProvider =
+        ImageHelper.getImageProvider(mountain.fotoUrl, mountain.namaGunung) ??
         const AssetImage('assets/images/background_mount.png') as ImageProvider;
 
     final isClosed = mountain.statusJalur == 'Tutup';
 
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, AppRoutes.mountainDetail, arguments: mountain),
+      onTap: () => Navigator.pushNamed(
+        context,
+        AppRoutes.mountainDetail,
+        arguments: mountain,
+      ),
       child: Container(
         width: 250,
         margin: const EdgeInsets.only(right: 14),
@@ -1390,7 +1488,11 @@ class _DashboardPageState extends State<_DashboardPage> {
                 errorBuilder: (context, error, stackTrace) => Container(
                   color: AppTheme.primarySubtle,
                   child: const Center(
-                    child: Icon(Icons.terrain_rounded, size: 48, color: AppTheme.primary),
+                    child: Icon(
+                      Icons.terrain_rounded,
+                      size: 48,
+                      color: AppTheme.primary,
+                    ),
                   ),
                 ),
               ),
@@ -1421,16 +1523,25 @@ class _DashboardPageState extends State<_DashboardPage> {
                       children: [
                         // Badge Elevasi MDPL
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.45),
                             borderRadius: BorderRadius.circular(9999),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.25),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.terrain_rounded, size: 12, color: Colors.white),
+                              const Icon(
+                                Icons.terrain_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 '${mountain.elevasiMdpl} MDPL',
@@ -1445,7 +1556,10 @@ class _DashboardPageState extends State<_DashboardPage> {
                         ),
                         // Badge Status Jalur
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: isClosed
                                 ? AppTheme.error.withValues(alpha: 0.9)
@@ -1510,12 +1624,18 @@ class _DashboardPageState extends State<_DashboardPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(9999),
-                              side: const BorderSide(color: Color(0xFF557A5E), width: 1),
+                              side: const BorderSide(
+                                color: Color(0xFF557A5E),
+                                width: 1,
+                              ),
                             ),
                             elevation: 0,
                           ),
@@ -1531,7 +1651,11 @@ class _DashboardPageState extends State<_DashboardPage> {
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              const Icon(Icons.arrow_forward_rounded, size: 12, color: Colors.white),
+                              const Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
                             ],
                           ),
                         ),
@@ -1578,12 +1702,14 @@ class _DashboardPageState extends State<_DashboardPage> {
             _buildCompactMenuItem(
               label: 'SOS',
               icon: Icons.sos_rounded,
-              onTap: () => Navigator.pushNamed(context, AppRoutes.fallDetection),
+              onTap: () =>
+                  Navigator.pushNamed(context, AppRoutes.fallDetection),
             ),
             _buildCompactMenuItem(
               label: 'Games',
               icon: Icons.sports_esports_outlined,
-              onTap: () => Navigator.pushNamed(context, AppRoutes.mountainClimber),
+              onTap: () =>
+                  Navigator.pushNamed(context, AppRoutes.mountainClimber),
             ),
           ],
         ),
@@ -1591,6 +1717,16 @@ class _DashboardPageState extends State<_DashboardPage> {
     );
   }
 
+  // ==========================================================================
+  // 🎨 [3. UBAH WARNA 4 MENU UTAMA (PETA OFFLINE, KOMPAS, SOS, GAMES)]
+  // --------------------------------------------------------------------------
+  // Cara Ubah:
+  // - Warna Background Kotak Luar: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+  // - Warna Garis Tepi (Border): Ganti `color: AppTheme.border` pada Border.all(...)
+  // - Warna Kotak Ikon Dalam: Ganti `color: AppTheme.primarySubtle` (contoh: Color(0xFFE8F5E9))
+  // - Warna Ikon Menu: Ganti `color: AppTheme.primary` pada Icon(icon, color: ...) (contoh: Colors.green)
+  // - Warna Label Teks Menu: Ganti `color: AppTheme.textPrimary` pada style Text(label)
+  // ==========================================================================
   /// Item Menu Kompak Bulat/Kotak Halus
   Widget _buildCompactMenuItem({
     required String label,
@@ -1627,11 +1763,7 @@ class _DashboardPageState extends State<_DashboardPage> {
                     color: AppTheme.primarySubtle,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 24,
-                    color: AppTheme.primary,
-                  ),
+                  child: Icon(icon, size: 24, color: AppTheme.primary),
                 ),
               ),
             ),
@@ -1653,7 +1785,15 @@ class _DashboardPageState extends State<_DashboardPage> {
     );
   }
 
+  // ==========================================================================
+  // 🎨 [2. UBAH WARNA CARD CUACA]
+  // --------------------------------------------------------------------------
+  // Cara Ubah:
+  // - Warna Background Card: Ganti `color: AppTheme.surface` pada BoxDecoration (contoh: Colors.white)
+  // - Warna Garis Border: Ganti `color: AppTheme.border` di Border.all(...)
+  // - Warna Lingkaran Ikon Lokasi: Ganti `color: AppTheme.primarySubtle` & ikon `color: AppTheme.primary`
 
+  // ==========================================================================
   /// Dedicated Aura Weather Card Widget
   Widget _buildWeatherCardWidget() {
     return GestureDetector(
@@ -1681,7 +1821,10 @@ class _DashboardPageState extends State<_DashboardPage> {
                     const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.primary,
+                      ),
                     ),
                     const SizedBox(width: 14),
                     Text(
@@ -1696,199 +1839,209 @@ class _DashboardPageState extends State<_DashboardPage> {
                 ),
               )
             : _weatherData != null
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Row: Lokasi & Status Pill
+                  Row(
                     children: [
-                      // Header Row: Lokasi & Status Pill
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primarySubtle,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.location_on_rounded,
-                              size: 14,
-                              color: AppTheme.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _weatherData!.locationName,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _weatherData!.isStormWarning
-                                  ? const Color(0xFFFEE2E2)
-                                  : AppTheme.primarySubtle,
-                              borderRadius: BorderRadius.circular(9999),
-                              border: Border.all(
-                                color: _weatherData!.isStormWarning
-                                    ? const Color(0xFFFCA5A5)
-                                    : const Color(0xFFD4E0D2),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _weatherData!.condition,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: _weatherData!.isStormWarning
-                                        ? AppTheme.error
-                                        : AppTheme.primary,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 10,
-                                  color: _weatherData!.isStormWarning
-                                      ? AppTheme.error
-                                      : AppTheme.primary,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Main Weather Row: Suhu + Emoji + Jalur Status
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${_weatherData!.temperature.round()}°C',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 34,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.textPrimary,
-                              letterSpacing: -1,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          _buildWeatherVisualIcon(_weatherData!.condition, _weatherData!.isStormWarning),
-                          const Spacer(),
-                          if (_weatherData!.isStormWarning)
-                            Tooltip(
-                              message: 'Peringatan Cuaca Ekstrem di Jalur',
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: const Color(0xFFFEE2E2),
-                                  border: Border.all(
-                                    color: AppTheme.error.withValues(alpha: 0.4),
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppTheme.error.withValues(alpha: 0.15),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.warning_rounded,
-                                    size: 19,
-                                    color: AppTheme.error,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Ringkasan Kondisi
-                      Text(
-                        _weatherData!.description,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          color: AppTheme.textSecondary,
-                          height: 1.35,
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: AppTheme.primarySubtle,
+                          shape: BoxShape.circle,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        child: const Icon(
+                          Icons.location_on_rounded,
+                          size: 14,
+                          color: AppTheme.primary,
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      const Divider(height: 1, color: AppTheme.border),
-                      const SizedBox(height: 10),
-
-                      // Metrics: Kelembaban + Kecepatan Angin (Bebas Overflow)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildWeatherMetric(
-                            Icons.water_drop_outlined,
-                            'Lembab',
-                            '${_weatherData!.humidity.toInt()}%',
-                          ),
-                          _buildWeatherMetric(
-                            Icons.air_rounded,
-                            'Angin',
-                            '${_weatherData!.windSpeed.toStringAsFixed(1)} km/j',
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Detail',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 2),
-                              const Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 12,
-                                color: AppTheme.primary,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      const Icon(Icons.cloud_off_rounded, color: AppTheme.textSecondary, size: 20),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Data cuaca belum tersedia (Tarik untuk sinkron)',
+                          _weatherData!.locationName,
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.5,
-                            color: AppTheme.textSecondary,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      TextButton(
-                        onPressed: _fetchWeather,
-                        child: const Text('Coba Lagi'),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _weatherData!.isStormWarning
+                              ? const Color(0xFFFEE2E2)
+                              : AppTheme.primarySubtle,
+                          borderRadius: BorderRadius.circular(9999),
+                          border: Border.all(
+                            color: _weatherData!.isStormWarning
+                                ? const Color(0xFFFCA5A5)
+                                : const Color(0xFFD4E0D2),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _weatherData!.condition,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: _weatherData!.isStormWarning
+                                    ? AppTheme.error
+                                    : AppTheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 10,
+                              color: _weatherData!.isStormWarning
+                                  ? AppTheme.error
+                                  : AppTheme.primary,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 14),
+
+                  // Main Weather Row: Suhu + Emoji + Jalur Status
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${_weatherData!.temperature.round()}°C',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      _buildWeatherVisualIcon(
+                        _weatherData!.condition,
+                        _weatherData!.isStormWarning,
+                      ),
+                      const Spacer(),
+                      if (_weatherData!.isStormWarning)
+                        Tooltip(
+                          message: 'Peringatan Cuaca Ekstrem di Jalur',
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFFFEE2E2),
+                              border: Border.all(
+                                color: AppTheme.error.withValues(alpha: 0.4),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.error.withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.warning_rounded,
+                                size: 19,
+                                color: AppTheme.error,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Ringkasan Kondisi
+                  Text(
+                    _weatherData!.description,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      height: 1.35,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1, color: AppTheme.border),
+                  const SizedBox(height: 10),
+
+                  // Metrics: Kelembaban + Kecepatan Angin (Bebas Overflow)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildWeatherMetric(
+                        Icons.water_drop_outlined,
+                        'Lembab',
+                        '${_weatherData!.humidity.toInt()}%',
+                      ),
+                      _buildWeatherMetric(
+                        Icons.air_rounded,
+                        'Angin',
+                        '${_weatherData!.windSpeed.toStringAsFixed(1)} km/j',
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Detail',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 12,
+                            color: AppTheme.primary,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  const Icon(
+                    Icons.cloud_off_rounded,
+                    color: AppTheme.textSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Data cuaca belum tersedia (Tarik untuk sinkron)',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _fetchWeather,
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -1939,6 +2092,15 @@ class _DashboardPageState extends State<_DashboardPage> {
     );
   }
 
+  // ==========================================================================
+  // 🎨 [5. UBAH WARNA CARD NAMA GUNUNG DI BAWAH TIKET TERBARU]
+  // --------------------------------------------------------------------------
+  // Cara Ubah:
+  // - Warna Background Card Tiket: Ganti `color: AppTheme.surface` pada BoxDecoration (contoh: Colors.white)
+  // - Warna Garis Tepi (Border): Ganti `color: AppTheme.border` di Border.all(...)
+  // - Warna Kotak Ikon Tiket (Kiri): Ganti `color: AppTheme.primarySubtle` & ikon `color: AppTheme.primary`
+  // - Warna Badge Status (Terdaftar/Di Jalur): Diatur otomatis oleh switch-case statusColor di bawah ini
+  // ==========================================================================
   /// Tampilan Preview Ramping untuk Tiket di Home Dashboard
   Widget _buildTicketPreviewCard(SimaksiPermit permit) {
     Color statusColor;
@@ -1999,7 +2161,10 @@ class _DashboardPageState extends State<_DashboardPage> {
                       decoration: BoxDecoration(
                         color: AppTheme.primarySubtle,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFD4E0D2), width: 1),
+                        border: Border.all(
+                          color: const Color(0xFFD4E0D2),
+                          width: 1,
+                        ),
                       ),
                       child: const Icon(
                         Icons.confirmation_num_outlined,
@@ -2036,11 +2201,16 @@ class _DashboardPageState extends State<_DashboardPage> {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(9999),
-                        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Text(
                         permit.statusIzin,
@@ -2059,7 +2229,11 @@ class _DashboardPageState extends State<_DashboardPage> {
                 // Baris Bawah: Jadwal Tanggal + Rombongan + Detail Action
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined, size: 13, color: AppTheme.textSecondary),
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 13,
+                      color: AppTheme.textSecondary,
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       AppDateUtils.formatDateIndonesian(permit.tanggalNaik),
@@ -2069,9 +2243,19 @@ class _DashboardPageState extends State<_DashboardPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text('•', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                    const Text(
+                      '•',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.group_outlined, size: 14, color: AppTheme.textSecondary),
+                    const Icon(
+                      Icons.group_outlined,
+                      size: 14,
+                      color: AppTheme.textSecondary,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '${permit.jumlahAnggota} Pendaki',
@@ -2146,7 +2330,11 @@ class _DashboardPageState extends State<_DashboardPage> {
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppTheme.textSecondary, size: 20),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppTheme.textSecondary,
+                      size: 20,
+                    ),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
@@ -2156,10 +2344,7 @@ class _DashboardPageState extends State<_DashboardPage> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
-                child: TicketCard(
-                  permit: permit,
-                  initiallyExpanded: true,
-                ),
+                child: TicketCard(permit: permit, initiallyExpanded: true),
               ),
             ),
           ],
@@ -2168,7 +2353,7 @@ class _DashboardPageState extends State<_DashboardPage> {
     );
   }
 
-    Future<List<SimaksiPermit>> _getRecentPermits() async {
+  Future<List<SimaksiPermit>> _getRecentPermits() async {
     final user = AuthService.instance.currentUser;
     if (user == null) return [];
     return DatabaseService.instance.getPermitsByUser(user.id);
@@ -2210,9 +2395,7 @@ class _DashboardPageState extends State<_DashboardPage> {
         const SizedBox(height: 12),
 
         // Carousel 3 Gunung yang bisa geser-geser sendiri
-        _SmartRecommendationCarousel(
-          recommendations: _smartRecommendations,
-        ),
+        _SmartRecommendationCarousel(recommendations: _smartRecommendations),
       ],
     );
   }
@@ -2272,12 +2455,15 @@ class _DashboardPageState extends State<_DashboardPage> {
     if (mountains.isEmpty) return [];
 
     // 1. Analisis Riwayat SIMAKSI
-    final climbedNames = permits.map((p) => (p.namaGunung ?? p.gunungId).toLowerCase()).toSet();
+    final climbedNames = permits
+        .map((p) => (p.namaGunung ?? p.gunungId).toLowerCase())
+        .toSet();
     final int totalClimbs = permits.length;
 
     // 2. Analisis Data Rekam Medis
     final riwayatMedis = (medicalProfile?.riwayatPenyakit ?? '').toLowerCase();
-    final bool hasSensitiveHealth = riwayatMedis.contains('asma') ||
+    final bool hasSensitiveHealth =
+        riwayatMedis.contains('asma') ||
         riwayatMedis.contains('paru') ||
         riwayatMedis.contains('sesak') ||
         riwayatMedis.contains('jantung') ||
@@ -2291,15 +2477,18 @@ class _DashboardPageState extends State<_DashboardPage> {
     // 4. Analisis Cuaca Gunung
     final weatherCondition = weather?.condition ?? 'Cerah Berawan';
     final int temp = weather?.temperature.round() ?? 21;
-    final bool isGoodWeather = weather == null ||
-        (!weather.isStormWarning && !weather.condition.toLowerCase().contains('badai'));
+    final bool isGoodWeather =
+        weather == null ||
+        (!weather.isStormWarning &&
+            !weather.condition.toLowerCase().contains('badai'));
 
     // 5. Penilaian Skor Kecocokan Personal
     final List<Map<String, dynamic>> scored = [];
 
     for (final m in mountains) {
       int score = 82;
-      final bool isClimbed = climbedNames.contains(m.namaGunung.toLowerCase()) ||
+      final bool isClimbed =
+          climbedNames.contains(m.namaGunung.toLowerCase()) ||
           climbedNames.contains(m.id.toLowerCase());
       final bool isClosed = m.statusJalur == 'Tutup';
 
@@ -2333,7 +2522,8 @@ class _DashboardPageState extends State<_DashboardPage> {
       } else {
         if (m.elevasiMdpl >= 3000) {
           score += 15;
-          riwayatNote = 'Sesuai jam terbang & riwayat $totalClimbs Simaksi Anda';
+          riwayatNote =
+              'Sesuai jam terbang & riwayat $totalClimbs Simaksi Anda';
         } else {
           score += 8;
           riwayatNote = 'Cocok untuk tektok santai pendaki berpengalaman';
@@ -2437,10 +2627,12 @@ class _SmartRecommendationCarousel extends StatefulWidget {
   const _SmartRecommendationCarousel({required this.recommendations});
 
   @override
-  State<_SmartRecommendationCarousel> createState() => _SmartRecommendationCarouselState();
+  State<_SmartRecommendationCarousel> createState() =>
+      _SmartRecommendationCarouselState();
 }
 
-class _SmartRecommendationCarouselState extends State<_SmartRecommendationCarousel> {
+class _SmartRecommendationCarouselState
+    extends State<_SmartRecommendationCarousel> {
   late final PageController _pageController;
   int _currentPage = 0;
   Timer? _autoScrollTimer;
@@ -2456,7 +2648,9 @@ class _SmartRecommendationCarouselState extends State<_SmartRecommendationCarous
   void _startAutoScroll() {
     _autoScrollTimer?.cancel();
     if (widget.recommendations.length <= 1) return;
-    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 4500), (timer) {
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 4500), (
+      timer,
+    ) {
       if (!mounted || _isInteracting || !_pageController.hasClients) return;
       final nextPage = (_currentPage + 1) % widget.recommendations.length;
       _pageController.animateToPage(
@@ -2537,11 +2731,19 @@ class _SmartRecommendationCarouselState extends State<_SmartRecommendationCarous
   }
 
   Widget _buildCard(SmartMountainRecommendation rec) {
-    final imageProvider = ImageHelper.getImageProvider(rec.mountain.fotoUrl, rec.mountain.namaGunung) ??
+    final imageProvider =
+        ImageHelper.getImageProvider(
+          rec.mountain.fotoUrl,
+          rec.mountain.namaGunung,
+        ) ??
         const AssetImage('assets/images/background_mount.png') as ImageProvider;
 
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, AppRoutes.mountainDetail, arguments: rec.mountain),
+      onTap: () => Navigator.pushNamed(
+        context,
+        AppRoutes.mountainDetail,
+        arguments: rec.mountain,
+      ),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -2566,7 +2768,11 @@ class _SmartRecommendationCarouselState extends State<_SmartRecommendationCarous
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: const Color(0xFF1B2E23),
                     child: const Center(
-                      child: Icon(Icons.terrain_rounded, size: 48, color: Colors.white24),
+                      child: Icon(
+                        Icons.terrain_rounded,
+                        size: 48,
+                        color: Colors.white24,
+                      ),
                     ),
                   ),
                 ),
@@ -2601,16 +2807,25 @@ class _SmartRecommendationCarouselState extends State<_SmartRecommendationCarous
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.55),
                             borderRadius: BorderRadius.circular(9999),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.15),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.recommend_rounded, size: 14, color: Color(0xFF52B788)),
+                              const Icon(
+                                Icons.recommend_rounded,
+                                size: 14,
+                                color: Color(0xFF52B788),
+                              ),
                               const SizedBox(width: 5),
                               Text(
                                 'Rekomendasi Untukmu',
@@ -2626,7 +2841,10 @@ class _SmartRecommendationCarouselState extends State<_SmartRecommendationCarous
                         ),
                         // Label MDPL di pojok kanan atas (Tanpa icon dan tanpa outline, hijau solid)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF2D6A4F),
                             borderRadius: BorderRadius.circular(9999),
@@ -2670,11 +2888,16 @@ class _SmartRecommendationCarouselState extends State<_SmartRecommendationCarous
                     // Kotak Alasan Rekomendasi (Clean, human-curated style)
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.45),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2703,6 +2926,13 @@ class _SmartRecommendationCarouselState extends State<_SmartRecommendationCarous
                     ),
                     const SizedBox(height: 10),
 
+                    // ==========================================================================
+                    // 🎨 [4. UBAH WARNA TOMBOL "JELAJAHI JALUR & SIMAKSI"]
+                    // --------------------------------------------------------------------------
+                    // Cara Ubah:
+                    // - Warna Background Tombol: Ganti `backgroundColor: AppTheme.primary` (contoh: Color(0xFF1B4332))
+                    // - Warna Teks & Ikon Panah: Ganti `foregroundColor: Colors.white` (contoh: Colors.amber)
+                    // ==========================================================================
                     // Tombol CTA (Tinggi 40, responsive, anti overflow i ->)
                     SizedBox(
                       width: double.infinity,
@@ -2791,7 +3021,8 @@ class _AnimatedTbotBubbleState extends State<_AnimatedTbotBubble>
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => Navigator.pushNamed(context, AppRoutes.survivalAssistant),
+            onTap: () =>
+                Navigator.pushNamed(context, AppRoutes.survivalAssistant),
             customBorder: const CircleBorder(),
             splashColor: Colors.white.withValues(alpha: 0.25),
             highlightColor: Colors.transparent,
@@ -2856,7 +3087,12 @@ class _SparklingSpeechBubblePainter extends CustomPainter {
 
     final bubblePath = Path.combine(PathOperation.union, circle, tail);
 
-    canvas.drawShadow(bubblePath, Colors.black.withValues(alpha: 0.28), 7, true);
+    canvas.drawShadow(
+      bubblePath,
+      Colors.black.withValues(alpha: 0.28),
+      7,
+      true,
+    );
 
     final double shimmerPos = -1.2 + shimmerProgress * 3.4;
     final gradient = LinearGradient(
@@ -2895,7 +3131,3 @@ class _SparklingSpeechBubblePainter extends CustomPainter {
     return oldDelegate.shimmerProgress != shimmerProgress;
   }
 }
-
-
-
-

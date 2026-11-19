@@ -1,7 +1,13 @@
-// ============================================
-// TimurLang - Universal AI Assistant Screen
-// Multi-topic intelligent chatbot with quick suggestions & API configuration
-// ============================================
+// ============================================================================
+// 🤖 [KODINGAN UI FITUR ARTIFICIAL INTELLIGENCE (AI SURVIVAL ASSISTANT)]
+// ----------------------------------------------------------------------------
+// File: survival_assistant_screen.dart
+// Penjelasan:
+// - Tampilan antarmuka (UI) asisten AI interaktif bagi pendaki
+// - Berkomunikasi dengan GeminiService untuk memproses pesan tanya-jawab (prompting)
+// - Dilengkapi rekomendasi cepat pertanyaan survival, pengaturan custom API Key,
+//   dan indikator status koneksi (Cloud AI vs Offline Mode)
+// ============================================================================
 
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';

@@ -1,6 +1,13 @@
-// ============================================
-// TimurLang - Midtrans Payment Screen (WebView)
-// ============================================
+// ============================================================================
+// 📱 [KODINGAN MIDTRANS - TAMPILAN WEBVIEW PEMBAYARAN MIDTRANS SNAP]
+// ----------------------------------------------------------------------------
+// File: midtrans_payment_screen.dart
+// Penjelasan:
+// - Antarmuka (UI) WebView resmi Midtrans menggunakan package 'webview_flutter'
+// - Memuat URL Snap transaksi yang dihasilkan dari MidtransService
+// - Pengguna dapat memilih metode bayar: QRIS, GoPay, ShopeePay, Virtual Account Bank (BCA, Mandiri, BNI, BRI), dll
+// - Mendeteksi redirect URL otomatis saat pembayaran berhasil (settlement / status 200)
+// ============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';

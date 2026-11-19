@@ -1,8 +1,12 @@
-// ============================================
-// TimurLang - Auth Service
-// Local encryption, session, biometric
-// Sync auth ke Supabase (online)
-// ============================================
+// ============================================================================
+// 🔐 [AUTH SERVICE - OTENTIKASI PENGGUNA, ENKRIPSI & BIOMETRIK]
+// ----------------------------------------------------------------------------
+// File: auth_service.dart
+// Penjelasan:
+// - Mengelola registrasi, login, hashing SHA-256, session pengguna
+// - Dilengkapi integrasi [SENSOR BIOMETRIK / SIDIK JARI] menggunakan 'local_auth'
+// - Sinkronisasi sesi akun antara SQLite lokal dan Supabase Cloud
+// ============================================================================
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -322,6 +326,14 @@ class AuthService {
     }
   }
 
+  // ==========================================================================
+  // 👆 [KODINGAN SENSOR BIOMETRIK - FINGERPRINT / BIOMETRIC AUTHENTICATION]
+  // --------------------------------------------------------------------------
+  // Menggunakan package 'local_auth' (LocalAuthentication)
+  // - Memeriksa ketersediaan hardware sensor biometrik (canCheckBiometrics)
+  // - Melakukan otentikasi sidik jari untuk login cepat tanpa password
+  // - Menjaga keamanan akun pendaki dan validasi akses data medis darurat
+  // ==========================================================================
   /// Biometric authentication (login)
   /// Mendukung multi-akun: spesifik berdasarkan email atau userId,
   /// atau otomatis jika hanya ada 1 akun dengan sidik jari aktif.

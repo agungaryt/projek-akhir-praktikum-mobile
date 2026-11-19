@@ -1,7 +1,14 @@
-// ============================================
-// TimurLang - Supabase Service
-// Online database operations (Supabase)
-// ============================================
+// ============================================================================
+// ☁️ [KODINGAN DATABASE SUPABASE (ONLINE / CLOUD DATABASE)]
+// ----------------------------------------------------------------------------
+// File: supabase_service.dart
+// Penjelasan:
+// - Menggunakan package 'supabase_flutter'
+// - Menghubungkan aplikasi ke server cloud Supabase (PostgreSQL Backend)
+// - Berfungsi untuk sinkronisasi data online, otentikasi cloud, backup data pengguna,
+//   manajemen tiket SIMAKSI online, pelaporan insiden darurat (SOS) ke basecamp,
+//   serta sinkronisasi status kuota & jalur pendakian secara real-time
+// ============================================================================
 
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:supabase_flutter/supabase_flutter.dart';

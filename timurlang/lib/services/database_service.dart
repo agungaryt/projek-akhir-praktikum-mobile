@@ -1,7 +1,14 @@
-// ============================================
-// TimurLang - Database Service (SQLite)
-// Offline-first architecture core
-// ============================================
+// ============================================================================
+// 💾 [KODINGAN DATABASE LOKAL - SQLITE (OFFLINE-FIRST)]
+// ----------------------------------------------------------------------------
+// File: database_service.dart
+// Penjelasan:
+// - Menggunakan package 'sqflite' & 'sqflite_common_ffi_web'
+// - Berfungsi sebagai penyimpanan basis data lokal (SQLite) pada perangkat
+// - Menyimpan tabel: users, medical_profiles, mountains, basecamp_posts,
+//   simaksi_permits, sos_incidents, sync_queue, personal_data, feedback
+// - Mendukung operasi CRUD lokal saat tidak ada koneksi internet (offline mode)
+// ============================================================================
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
@@ -168,6 +175,10 @@ class DatabaseService {
     return db;
   }
 
+  // ==========================================================================
+  // [DATABASE LOKAL: STRUKTUR TABEL SQLITE (SCHEMA DDL)]
+  // Membuat tabel-tabel lokal saat database pertama kali dibuka
+  // ==========================================================================
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE users (

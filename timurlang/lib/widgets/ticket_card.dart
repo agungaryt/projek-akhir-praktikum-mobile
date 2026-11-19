@@ -961,7 +961,7 @@ class _TicketCardState extends State<TicketCard> {
           borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: AppTheme.border),
         ),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,

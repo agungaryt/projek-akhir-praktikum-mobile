@@ -1,7 +1,14 @@
-// ============================================
-// TimurLang - Midtrans Service
-// Snap Transaction & Payment Status Verification
-// ============================================
+// ============================================================================
+// 💳 [KODINGAN MIDTRANS PAYMENT GATEWAY - SERVICE & API INTEGRATION]
+// ----------------------------------------------------------------------------
+// File: midtrans_service.dart
+// Penjelasan:
+// - Mengintegrasikan Payment Gateway Midtrans (Snap API & Core API v2)
+// - [1] createSnapTransaction(): Mengirim data order ke server Midtrans,
+//       menghasilkan Snap Token & Redirect URL untuk pembayaran (QRIS, E-Wallet, VA Bank)
+// - [2] checkTransactionStatus(): Mengecek status transaksi (settlement/capture/pending)
+//       langsung ke REST API Midtrans menggunakan autentikasi Server Key
+// ============================================================================
 
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -22,6 +29,9 @@ class MidtransService {
     return 'Basic $encodedKey';
   }
 
+  // ==========================================================================
+  // 🛒 [1. MEMBUAT TRANSAKSI SNAP MIDTRANS (REQUEST SNAP TOKEN & URL)]
+  // ==========================================================================
   /// Membuat transaksi Snap di Midtrans dan mengembalikan redirectUrl untuk WebView
   Future<({
     bool success,
@@ -126,6 +136,9 @@ class MidtransService {
     }
   }
 
+  // ==========================================================================
+  // 🔍 [2. VERIFIKASI STATUS PEMBAYARAN LANGSUNG KE REST API MIDTRANS]
+  // ==========================================================================
   /// Cek status transaksi langsung ke API Midtrans
   Future<({
     bool success,

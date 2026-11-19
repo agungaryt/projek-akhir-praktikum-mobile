@@ -27,6 +27,11 @@ class AppConstants {
   static const String registeredBiometricUserIdsKey =
       'registered_biometric_user_ids';
 
+  // ==========================================================================
+  // 💳 [KODINGAN KONFIGURASI MIDTRANS: SERVER KEY, CLIENT KEY & URL SNAP]
+  // --------------------------------------------------------------------------
+  // Kunci API resmi untuk gateway pembayaran Midtrans Sandbox / Production
+  // ==========================================================================
   // Midtrans Payment Gateway
   // Otomatis terdeteksi Production jika Server Key bukan Sandbox (tidak berawalan SB-)
   static bool get midtransIsProduction =>

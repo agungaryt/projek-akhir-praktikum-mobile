@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../config/theme.dart';
 import '../../config/routes.dart';
 import '../../models/user.dart';
@@ -80,12 +81,20 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           backgroundColor: AppTheme.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
   }
 
+  // ==========================================================================
+  // 👆 [KODINGAN UI FITUR BIOMETRIK - LOGIN SIDIK JARI / FINGERPRINT]
+  // --------------------------------------------------------------------------
+  // Menghubungkan tombol sensor fingerprint di layar login ke AuthService
+  // Mendukung login cepat dan aman dengan sidik jari pengguna
+  // ==========================================================================
   Future<void> _biometricLogin() async {
     final email = _emailCtrl.text.trim();
     if (email.isNotEmpty) {
@@ -108,7 +117,9 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           backgroundColor: AppTheme.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -154,7 +165,9 @@ class _LoginScreenState extends State<LoginScreen>
             backgroundColor: AppTheme.error,
             duration: const Duration(seconds: 4),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -185,7 +198,11 @@ class _LoginScreenState extends State<LoginScreen>
                         shape: BoxShape.circle,
                         border: Border.all(color: AppTheme.border),
                       ),
-                      child: const Icon(Icons.fingerprint_rounded, color: AppTheme.primary, size: 28),
+                      child: const Icon(
+                        Icons.fingerprint_rounded,
+                        color: AppTheme.primary,
+                        size: 28,
+                      ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -220,7 +237,8 @@ class _LoginScreenState extends State<LoginScreen>
                   child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: users.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final u = users[index];
                       final isBasecamp = u.peran == 'basecamp';
@@ -231,14 +249,21 @@ class _LoginScreenState extends State<LoginScreen>
                           border: Border.all(color: AppTheme.border),
                         ),
                         child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
                           leading: CircleAvatar(
                             backgroundColor: isBasecamp
                                 ? AppTheme.accent.withValues(alpha: 0.15)
                                 : AppTheme.primarySubtle,
                             child: Icon(
-                              isBasecamp ? Icons.house_rounded : Icons.person_rounded,
-                              color: isBasecamp ? AppTheme.accent : AppTheme.primary,
+                              isBasecamp
+                                  ? Icons.house_rounded
+                                  : Icons.person_rounded,
+                              color: isBasecamp
+                                  ? AppTheme.accent
+                                  : AppTheme.primary,
                             ),
                           ),
                           title: Text(
@@ -257,7 +282,10 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
                           trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: isBasecamp
                                   ? AppTheme.accent.withValues(alpha: 0.12)
@@ -274,7 +302,9 @@ class _LoginScreenState extends State<LoginScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
-                                color: isBasecamp ? AppTheme.accent : AppTheme.primary,
+                                color: isBasecamp
+                                    ? AppTheme.accent
+                                    : AppTheme.primary,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -376,6 +406,10 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // ==========================================================================
+                          // 🎨 [1. UBAH WARNA INPUTAN EMAIL]
+                          // --------------------------------------------------------------------------
+                          // ==========================================================================
                           CustomTextField(
                             controller: _emailCtrl,
                             label: 'Email',
@@ -383,8 +417,15 @@ class _LoginScreenState extends State<LoginScreen>
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: Validators.email,
-                            // fillColor: const Color(0xFFEFF6FF),
+                            // fillColor: Colors.white, // <-- AKTIFKAN & UBAH WARNA BACKGROUND EMAIL DI SINI
                           ),
+
+                          // ==========================================================================
+                          // 🎨 [2. UBAH WARNA INPUTAN KATA SANDI]
+                          // --------------------------------------------------------------------------
+                          // Cara Ubah:
+                          // - Hapus tanda '//' pada baris `fillColor` di bawah ini.
+                          // ==========================================================================
                           CustomTextField(
                             controller: _passwordCtrl,
                             label: 'Kata Sandi',
@@ -392,7 +433,7 @@ class _LoginScreenState extends State<LoginScreen>
                             prefixIcon: Icons.lock_outline_rounded,
                             isPassword: true,
                             validator: Validators.password,
-                            // fillColor: const Color(0xFFF0FDF4),
+                            // fillColor: Colors.white, // <-- AKTIFKAN & UBAH WARNA BACKGROUND KATA SANDI DI SINI
                           ),
 
                           // Remember Me checkbox
@@ -405,7 +446,8 @@ class _LoginScreenState extends State<LoginScreen>
                                   value: _rememberMe,
                                   activeColor: AppTheme.primary,
                                   checkColor: Colors.white,
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(5),
                                   ),
@@ -440,18 +482,28 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                           const SizedBox(height: 20),
 
-                          // Login button with gradient
+                          // ==========================================================================
+                          // 🎨 [3. UBAH WARNA TOMBOL MASUK]
+                          // --------------------------------------------------------------------------
+                          // Cara Ubah:
+                          // 1. Warna Background (Gradien): Ganti warna di dalam `LinearGradient(colors: [...])`
+                          //    Contoh warna solid: [Colors.green, Colors.green] atau [Color(0xFF1B4332), Color(0xFF2D6A4F)]
+                          // 2. Warna Bayangan (Shadow): Ganti `color: AppTheme.primary.withValues(alpha: 0.3)` di BoxShadow
+                          // 3. Warna Teks "Masuk": Ganti `color: Colors.white` pada TextStyle teks Masuk
+                          // ==========================================================================
                           Container(
                             width: double.infinity,
                             height: 50,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [AppTheme.primary, AppTheme.secondary],
+                                colors: [AppTheme.primary, AppTheme.secondary], // <-- UBAH WARNA BACKGROUND TOMBOL MASUK DI SINI
                               ),
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primary.withValues(alpha: 0.3),
+                                  color: AppTheme.primary.withValues(
+                                    alpha: 0.3,
+                                  ), // <-- UBAH WARNA BAYANGAN / GLOW DI SINI
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -480,21 +532,31 @@ class _LoginScreenState extends State<LoginScreen>
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.white,
+                                        color: Colors.white, // <-- UBAH WARNA TEKS "MASUK" DI SINI
                                       ),
                                     ),
                             ),
                           ),
                           const SizedBox(height: 12),
 
-                          // Biometric button
+                          // ==========================================================================
+                          // 🎨 [4. UBAH WARNA TOMBOL MASUK DENGAN SIDIK JARI]
+                          // --------------------------------------------------------------------------
+                          // Cara Ubah:
+                          // 1. Warna Background: Ganti `color: AppTheme.surfaceSubtle` pada BoxDecoration (contoh: Colors.white)
+                          // 2. Warna Garis Tepi (Border): Ganti `Border.all(color: AppTheme.border)` (contoh: Colors.grey)
+                          // 3. Warna Ikon Sidik Jari: Ganti `color: AppTheme.primary` pada Icon(Icons.fingerprint_rounded)
+                          // 4. Warna Teks Judul: Ganti `color: AppTheme.textPrimary` pada TextStyle Text('Masuk dengan Sidik Jari')
+                          // ==========================================================================
                           Container(
                             width: double.infinity,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: AppTheme.surfaceSubtle,
+                              color: AppTheme.surfaceSubtle, // <-- UBAH WARNA BACKGROUND TOMBOL SIDIK JARI DI SINI
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppTheme.border),
+                              border: Border.all(
+                                color: AppTheme.border,
+                              ), // <-- UBAH WARNA BORDER / GARIS TEPI DI SINI
                             ),
                             child: OutlinedButton.icon(
                               onPressed: _isLoading ? null : _biometricLogin,
@@ -508,14 +570,14 @@ class _LoginScreenState extends State<LoginScreen>
                               icon: const Icon(
                                 Icons.fingerprint_rounded,
                                 size: 22,
-                                color: AppTheme.primary,
+                                color: AppTheme.primary, // <-- UBAH WARNA IKON SIDIK JARI DI SINI
                               ),
                               label: Text(
                                 'Masuk dengan Sidik Jari',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.textPrimary,
+                                  color: AppTheme.textPrimary, // <-- UBAH WARNA TEKS SIDIK JARI DI SINI
                                 ),
                               ),
                             ),
@@ -538,7 +600,8 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, AppRoutes.register),
+                        onTap: () =>
+                            Navigator.pushNamed(context, AppRoutes.register),
                         child: Text(
                           'Daftar Sekarang',
                           style: GoogleFonts.plusJakartaSans(

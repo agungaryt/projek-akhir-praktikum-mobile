@@ -36,6 +36,15 @@ class _SimaksiPaymentScreenState extends State<SimaksiPaymentScreen> {
     _args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
   }
 
+  // ==========================================================================
+  // 💳 [KODINGAN ALUR PEMBAYARAN MIDTRANS: REQUEST SNAP & BUKA WEBVIEW]
+  // --------------------------------------------------------------------------
+  // Dipanggil saat tombol "Bayar Tiket Sekarang" ditekan oleh pengguna:
+  // 1. Memeriksa konfigurasi Midtrans Server Key
+  // 2. Memanggil MidtransService.createSnapTransaction() untuk mendapatkan URL pembayaran
+  // 3. Membuka layar MidtransPaymentScreen (WebView)
+  // 4. Jika sukses terbayar, melanjutkan ke pembuatan tiket SIMAKSI & broadcast Blockchain
+  // ==========================================================================
   Future<void> _processPayment() async {
     final user = AuthService.instance.currentUser;
     if (user == null) {
@@ -396,238 +405,255 @@ class _SimaksiPaymentScreenState extends State<SimaksiPaymentScreen> {
       builder: (ctx) => PopScope(
         canPop: false,
         child: Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           backgroundColor: AppTheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: const BorderSide(color: AppTheme.border),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
+          clipBehavior: Clip.antiAlias,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.88,
+              maxWidth: 420,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.success.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check_circle, color: AppTheme.success, size: 44),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Pembayaran Berhasil!',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Tiket Digital Berbasis Blockchain Diterbitkan',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-                ),
-                const SizedBox(height: 16),
-                // QR Box
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.border),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: QrImageView(
-                    data: permit.blockHash,
-                    version: QrVersions.auto,
-                    size: 160.0,
-                    backgroundColor: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primarySubtle,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.border),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.lock, size: 12, color: AppTheme.secondary),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          'Hash: ${permit.blockHash.substring(0, 16)}...',
-                          style: const TextStyle(fontSize: 10, fontFamily: 'monospace', color: AppTheme.textPrimary),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.success.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.check_circle, color: AppTheme.success, size: 44),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: () {
-                          Clipboard.setData(ClipboardData(text: permit.blockHash));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Hash disalin')),
-                          );
-                        },
-                        child: const Icon(Icons.copy, size: 12, color: AppTheme.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-                if (permit.blockHash.startsWith('0x')) ...[
-                  const SizedBox(height: 8),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(6),
-                      onTap: () => BlockchainService.openExplorer(context, permit.blockHash),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1B4332).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Pembayaran Berhasil!',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.open_in_new_rounded, size: 12, color: AppTheme.primary),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Lihat di Polygonscan (On-Chain)',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primary,
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Tiket Digital Berbasis Blockchain Diterbitkan',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                        ),
+                        const SizedBox(height: 14),
+                        // QR Box
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppTheme.border),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: QrImageView(
+                            data: permit.blockHash,
+                            version: QrVersions.auto,
+                            size: 140.0,
+                            backgroundColor: Colors.white,
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 10),
-                const Text(
-                  'Tunjukkan QR ini ke pos Basecamp untuk verifikasi check-in.\n(QR Code ini bersifat sekali pakai dan otomatis hangus setelah di-scan)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-                ),
-                const SizedBox(height: 12),
-
-                // Jadwal Check-in Basecamp
-                Builder(
-                  builder: (context) {
-                    final zone = TimeZoneHelper.getMountainTimeZone(mountainName: permit.namaGunung);
-                    return Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primarySubtle,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.schedule_rounded, size: 16, color: AppTheme.primary),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Jadwal Check-in Basecamp Resmi',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textSecondary,
-                                  ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primarySubtle,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppTheme.border),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.lock, size: 12, color: AppTheme.secondary),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Hash: ${permit.blockHash.substring(0, 16)}...',
+                                  style: const TextStyle(fontSize: 10, fontFamily: 'monospace', color: AppTheme.textPrimary),
                                 ),
-                                Text(
-                                  '07:00 - 16:00 $zone (${TimeZoneHelper.getTimeZoneFullName(zone)})',
-                                  style: const TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.primary,
-                                  ),
+                              ),
+                              const SizedBox(width: 4),
+                              GestureDetector(
+                                onTap: () {
+                                  Clipboard.setData(ClipboardData(text: permit.blockHash));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Hash disalin')),
+                                  );
+                                },
+                                child: const Icon(Icons.copy, size: 12, color: AppTheme.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (permit.blockHash.startsWith('0x')) ...[
+                          const SizedBox(height: 8),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(6),
+                              onTap: () => BlockchainService.openExplorer(context, permit.blockHash),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1B4332).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.open_in_new_rounded, size: 12, color: AppTheme.primary),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Lihat di Polygonscan (On-Chain)',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ],
-                      ),
-                    );
-                  },
-                ),
-
-                // Persyaratan Hardfile di Basecamp
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFFDE68A)),
-                  ),
-                  child: const Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.assignment_late_outlined, color: Color(0xFF92400E), size: 20),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'PERSYARATAN DI BASECAMP:',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF92400E),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            SizedBox(height: 3),
-                            Text(
-                              'Tiap pendaki (ketua & seluruh anggota) WAJIB membawa hardfile Surat Keterangan Sehat dan Kartu Identitas Asli (KTP/identitas diri) untuk verifikasi di pos basecamp.',
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                color: Color(0xFF78350F),
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Tunjukkan QR ini ke pos Basecamp untuk verifikasi check-in.\n(QR Code ini bersifat sekali pakai dan otomatis hangus setelah di-scan)',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+
+                        // Jadwal Check-in Basecamp
+                        Builder(
+                          builder: (context) {
+                            final zone = TimeZoneHelper.getMountainTimeZone(mountainName: permit.namaGunung);
+                            return Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primarySubtle,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.schedule_rounded, size: 16, color: AppTheme.primary),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Jadwal Check-in Basecamp Resmi',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.textSecondary,
+                                          ),
+                                        ),
+                                        Text(
+                                          '07:00 - 16:00 $zone (${TimeZoneHelper.getTimeZoneFullName(zone)})',
+                                          style: const TextStyle(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+
+                        // Persyaratan Hardfile di Basecamp
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFFDE68A)),
+                          ),
+                          child: const Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.assignment_late_outlined, color: Color(0xFF92400E), size: 20),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'PERSYARATAN DI BASECAMP:',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF92400E),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    SizedBox(height: 3),
+                                    Text(
+                                      'Tiap pendaki (ketua & seluruh anggota) WAJIB membawa hardfile Surat Keterangan Sehat dan Kartu Identitas Asli (KTP/identitas diri) untuk verifikasi di pos basecamp.',
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        color: Color(0xFF78350F),
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      Navigator.popUntil(context, ModalRoute.withName(AppRoutes.home));
-                      Navigator.pushNamed(context, AppRoutes.simaksiTicket);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 6, 20, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.popUntil(context, ModalRoute.withName(AppRoutes.home));
+                        Navigator.pushNamed(context, AppRoutes.simaksiTicket);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Buka Tiket Saya'),
                     ),
-                    child: const Text('Buka Tiket Saya'),
                   ),
                 ),
               ],

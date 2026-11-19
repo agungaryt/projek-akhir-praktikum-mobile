@@ -1,7 +1,12 @@
-// ============================================
-// TimurLang - Compass Screen
-// Oriented with Aura Travel Design System
-// ============================================
+// ============================================================================
+// 🧭 [KODINGAN FITUR SENSOR GYROSCOPE & MAGNETOMETER - KOMPAS DIGITAL]
+// ----------------------------------------------------------------------------
+// File: compass_screen.dart
+// Penjelasan:
+// - Antarmuka (UI) kompas digital untuk orientasi navigasi pendakian
+// - Membaca sensor gyroscope / orientation event secara real-time
+// - Menghitung derajat arah hadap (heading 0° - 360°) dan mata angin
+// ============================================================================
 
 import 'dart:math';
 import 'package:flutter/material.dart';

@@ -1,7 +1,13 @@
-// ============================================
-// TimurLang - Fall Detection & Emergency SOS Screen
-// Professional Emergency Hub with Sensor Monitoring & Tactile SOS Trigger
-// ============================================
+// ============================================================================
+// 🏃‍♂️ [KODINGAN FITUR SENSOR ACCELEROMETER - DETEKSI JATUH & SOS EMERGENCY]
+// ----------------------------------------------------------------------------
+// File: fall_detection_screen.dart
+// Penjelasan:
+// - Antarmuka (UI) pemantauan sensor accelerometer secara real-time
+// - Terhubung dengan SensorService & SosManager untuk mendeteksi jatuh/benturan
+// - Menampilkan status pemantauan sensor, countdown pembatalan darurat,
+//   dan memicu sirene & transmisi sinyal SOS jika terjadi insiden di gunung
+// ============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

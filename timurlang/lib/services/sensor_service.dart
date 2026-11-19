@@ -1,7 +1,12 @@
-// ============================================
-// TimurLang - Sensor Service
-// Accelerometer (fall detection) & Gyroscope (compass)
-// ============================================
+// ============================================================================
+// 📡 [KODINGAN SENSOR HARDWARE: ACCELEROMETER & GYROSCOPE]
+// ----------------------------------------------------------------------------
+// File: sensor_service.dart
+// Penjelasan:
+// - Menggunakan package 'sensors_plus'
+// - [1] ACCELEROMETER: Membaca percepatan 3-axis untuk deteksi jatuh mendadak
+// - [2] GYROSCOPE: Membaca rotasi sudut per detik untuk orientasi kemiringan & kompas
+// ============================================================================
 
 import 'dart:async';
 import 'dart:math';
@@ -32,7 +37,15 @@ class SensorService {
   Function()? onFallDetected;
   Function(double heading, double pitch, double roll)? onCompassUpdate;
 
-  /// Start fall detection monitoring
+  // ==========================================================================
+  // 🏃‍♂️ [KODINGAN SENSOR ACCELEROMETER] - DETEKSI JATUH & BENTURAN (FALL DETECTION)
+  // --------------------------------------------------------------------------
+  // Menggunakan 'accelerometerEventStream' dari package 'sensors_plus'
+  // - Membaca vektor percepatan gravitasi pada sumbu X, Y, Z
+  // - Menghitung total magnitude gaya gravitasi (G-force)
+  // - Memicu callback 'onFallDetected' saat terjadi benturan keras (> 2.5G)
+  //   atau kondisi free-fall / jatuh melayang (< 0.3G)
+  // ==========================================================================
   void startFallDetection() {
     if (_isMonitoring) return;
     _isMonitoring = true;
@@ -74,7 +87,14 @@ class SensorService {
     }
   }
 
-  /// Start compass/gyroscope readings
+  // ==========================================================================
+  // 🧭 [KODINGAN SENSOR GYROSCOPE] - ORIENTASI & KOMPAS DIGITAL (HEADING/PITCH/ROLL)
+  // --------------------------------------------------------------------------
+  // Menggunakan 'gyroscopeEventStream' dari package 'sensors_plus'
+  // - Mengukur kecepatan rotasi sudut (angular velocity) sumbu X, Y, Z
+  // - Mengintegrasikan nilai rotasi untuk menentukan sudut kemiringan (Pitch/Roll)
+  //   serta arah hadap mata angin (Heading 0° - 360°)
+  // ==========================================================================
   void startCompass() {
     _gyroSubscription = gyroscopeEventStream(
       samplingPeriod: const Duration(milliseconds: 50),
