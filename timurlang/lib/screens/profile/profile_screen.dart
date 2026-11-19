@@ -278,22 +278,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 24),
+            // ==========================================================================
+            // 🎨 [1. UBAH WARNA & BORDER TOMBOL EDIT PROFIL]
+            // --------------------------------------------------------------------------
+            // Cara Ubah:
+            // - Warna Background Tombol: Ganti `backgroundColor: AppTheme.primary`
+            // - Warna Teks & Ikon: Ganti `foregroundColor: Colors.white`
+            // - Warna Garis Tepi (Border): Ganti `side: BorderSide.none` menjadi:
+            //   side: const BorderSide(color: AppTheme.primary, width: 1.5)
+            // ==========================================================================
             SizedBox(
               width: double.infinity,
+              height: 48,
               child: ElevatedButton.icon(
                 onPressed: () => setState(() => _isEditing = true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary, // <-- UBAH WARNA BACKGROUND TOMBOL DI SINI
+                  foregroundColor: Colors.white,      // <-- UBAH WARNA TEKS & IKON DI SINI
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide.none, // <-- UBAH GARIS BORDER TOMBOL EDIT PROFIL DI SINI
+                  ),
+                ),
                 icon: const Icon(Icons.edit_note),
                 label: const Text('Edit Profil'),
               ),
             ),
             const SizedBox(height: 20),
 
+            // ==========================================================================
+            // 🎨 [2. UBAH WARNA & BORDER CARD LOGIN SIDIK JARI]
+            // --------------------------------------------------------------------------
+            // Cara Ubah:
+            // - Warna Garis Tepi (Border): Ganti `color: AppTheme.border` pada Border.all(...)
+            // - Ketebalan Border: Ganti `width: 1` pada Border.all(...)
+            // - Warna Background Card: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+            // - Warna Switch Aktif: Ganti `activeThumbColor: AppTheme.primaryGreen`
+            // ==========================================================================
             // ── Keamanan & Biometrik ──
             Container(
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.border, width: 1),
+                border: Border.all(color: AppTheme.border, width: 1), // <-- UBAH BORDER LOGIN SIDIK JARI DI SINI
               ),
               child: SwitchListTile(
                 value: user.isBiometricEnabled,
@@ -340,15 +368,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 12),
+
+            // ==========================================================================
+            // 🎨 [3. UBAH WARNA & BORDER CARD DATA DIRI LENGKAP]
+            // --------------------------------------------------------------------------
+            // Cara Ubah:
+            // - Warna Garis Tepi (Border): Ganti di dalam `Border.all(color: ...)`
+            //   * Jika data lengkap: `AppTheme.safeGreen`
+            //   * Jika belum lengkap: `AppTheme.accentOrange`
+            //   * Atau ganti warna statis, contoh: `color: AppTheme.border`
+            // - Warna Background Card: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+            // ==========================================================================
             // ── Data Diri Pendaki (Wajib SIMAKSI) ──
             Container(
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _isPersonalDataComplete
                       ? AppTheme.safeGreen.withValues(alpha: 0.35)
-                      : AppTheme.accentOrange.withValues(alpha: 0.4),
+                      : AppTheme.accentOrange.withValues(alpha: 0.4), // <-- UBAH BORDER DATA DIRI DI SINI
                   width: 1,
                 ),
               ),
@@ -384,12 +423,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 12),
 
+            // ==========================================================================
+            // 🎨 [4. UBAH WARNA & BORDER CARD DATA REKAM MEDIS]
+            // --------------------------------------------------------------------------
+            // Cara Ubah:
+            // - Warna Garis Tepi (Border): Ganti `color: AppTheme.border` pada Border.all(...)
+            // - Ketebalan Border: Ganti `width: 1` pada Border.all(...)
+            // - Warna Background Card: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+            // - Warna Ikon Palang Medis: Ganti `color: AppTheme.dangerRed`
+            // ==========================================================================
             // ── Rekam Medis Darurat ──
             Container(
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.border, width: 1),
+                border: Border.all(color: AppTheme.border, width: 1), // <-- UBAH BORDER DATA REKAM MEDIS DI SINI
               ),
               child: ListTile(
                 leading: Container(
@@ -413,12 +461,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 12),
 
+            // ==========================================================================
+            // 🎨 [5. UBAH WARNA & BORDER CARD KELUAR DARI AKUN]
+            // --------------------------------------------------------------------------
+            // Cara Ubah:
+            // - Warna Garis Tepi (Border): Ganti `color: AppTheme.error.withValues(alpha: 0.35)`
+            //   (contoh: `color: Colors.red.shade300` atau netral `color: AppTheme.border`)
+            // - Ketebalan Border: Ganti `width: 1.2` pada Border.all(...)
+            // - Warna Background Card: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+            // - Warna Teks "Keluar dari Akun": Ganti `color: AppTheme.error`
+            // ==========================================================================
             // ── Tombol Keluar dari Akun ──
             Container(
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.error.withValues(alpha: 0.35), width: 1.2),
+                border: Border.all(color: AppTheme.error.withValues(alpha: 0.35), width: 1.2), // <-- UBAH BORDER KELUAR AKUN DI SINI
               ),
               child: ListTile(
                 leading: Container(

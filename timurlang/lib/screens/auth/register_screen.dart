@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../config/routes.dart';
@@ -74,7 +75,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             backgroundColor: AppTheme.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         return;
@@ -88,7 +91,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             backgroundColor: AppTheme.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         return;
@@ -105,8 +110,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email: email,
       password: password,
       peran: _selectedRole,
-      gunungId: _selectedRole == AppConstants.roleBasecamp ? _selectedMountainId : null,
-      namaBasecamp: _selectedRole == AppConstants.roleBasecamp ? _namaBasecampCtrl.text.trim() : null,
+      gunungId: _selectedRole == AppConstants.roleBasecamp
+          ? _selectedMountainId
+          : null,
+      namaBasecamp: _selectedRole == AppConstants.roleBasecamp
+          ? _namaBasecampCtrl.text.trim()
+          : null,
     );
 
     if (!mounted) return;
@@ -120,8 +129,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       if (loginResult.success) {
-        final biometricAvailable =
-            await AuthService.instance.checkBiometricAvailability();
+        final biometricAvailable = await AuthService.instance
+            .checkBiometricAvailability();
 
         if (biometricAvailable && mounted) {
           await _showBiometricDialog();
@@ -144,7 +153,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             backgroundColor: AppTheme.primary,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         Navigator.pop(context);
@@ -158,7 +169,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           backgroundColor: AppTheme.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -183,7 +196,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppTheme.border),
               ),
-              child: const Icon(Icons.fingerprint_rounded, color: AppTheme.primary, size: 28),
+              child: const Icon(
+                Icons.fingerprint_rounded,
+                color: AppTheme.primary,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -245,7 +262,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: 0,
             ),
             icon: const Icon(Icons.fingerprint_rounded, size: 18),
@@ -271,7 +290,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             backgroundColor: result.success ? AppTheme.primary : AppTheme.error,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         if (result.success) {
@@ -370,6 +391,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 24),
 
+              // ==========================================================================
+              // 🎨 [UBAH WARNA KARTU / CARD FORM PENDAFTARAN PENDAKI (USER)]
+              // --------------------------------------------------------------------------
+              // Mengatur warna kartu putih yang membungkus seluruh kolom inputan:
+              // - Warna Background Kartu: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+              // - Warna Garis Border: Ganti `color: AppTheme.border` pada Border.all(...)
+              // - Warna Bayangan (Shadow): Ganti `color: AppTheme.textPrimary.withValues(alpha: 0.05)`
+              // ==========================================================================
               // Form Container Card
               Container(
                 padding: const EdgeInsets.all(22),
@@ -391,6 +420,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (_selectedRole == AppConstants.roleBasecamp) ...[
+                        // ==========================================================================
+                        // 🎨 [1. UBAH WARNA INPUTAN / DROPDOWN PILIH GUNUNG]
+                        // --------------------------------------------------------------------------
+                        // Cara Ubah:
+                        // - Warna Background Kotak: Ganti `color: AppTheme.surface` (contoh: Colors.white)
+                        // - Warna Garis Border: Ganti `color: AppTheme.border` pada Border.all(...)
+                        // - Warna Ikon Gunung & Panah: Ganti `color: AppTheme.primary` (contoh: Colors.green)
+                        // - Warna Teks Nama Gunung: Ganti `color: AppTheme.textPrimary` pada style Text
+                        // ==========================================================================
                         Text(
                           'Pilih Gunung',
                           style: GoogleFonts.plusJakartaSans(
@@ -401,11 +439,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: AppTheme.surface,
+                            color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND DROPDOWN DI SINI
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.border, width: 1.2),
+                            border: Border.all(
+                              color: AppTheme.border,
+                              width: 1.2,
+                            ), // <-- UBAH WARNA BORDER DI SINI
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
@@ -419,20 +463,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   fontSize: 14,
                                 ),
                               ),
-                              icon: const Icon(Icons.arrow_drop_down, color: AppTheme.primary),
+                              icon: const Icon(
+                                Icons.arrow_drop_down,
+                                color: AppTheme.primary,
+                              ), // <-- UBAH WARNA IKON PANAH
                               items: _mountains.map((m) {
                                 return DropdownMenuItem<String>(
                                   value: m.id,
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.terrain_rounded, color: AppTheme.primary, size: 20),
+                                      const Icon(
+                                        Icons.terrain_rounded,
+                                        color: AppTheme.primary,
+                                        size: 20,
+                                      ), // <-- UBAH WARNA IKON GUNUNG
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
                                           '${m.namaGunung} (${m.elevasiMdpl} mdpl)',
                                           style: GoogleFonts.plusJakartaSans(
                                             fontWeight: FontWeight.w600,
-                                            color: AppTheme.textPrimary,
+                                            color: AppTheme.textPrimary, // <-- UBAH WARNA TEKS NAMA GUNUNG
                                             fontSize: 14,
                                           ),
                                         ),
@@ -448,19 +499,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
+                        // ==========================================================================
+                        // 🎨 [UBAH WARNA INPUTAN NAMA BASECAMP / JALUR]
+                        // --------------------------------------------------------------------------
+                        // Cara Ubah:
+                        // - Hapus tanda '//' pada baris `fillColor` di bawah ini.
+                        // - Ganti dengan warna yang diinginkan, contoh:
+                        //   * fillColor: Colors.white, (putih bersih)
+                        //   * fillColor: const Color(0xFFEFF6FF), (biru muda pastel)
+                        //   * fillColor: AppTheme.surfaceSubtle, (abu-abu halus)
+                        // ==========================================================================
                         CustomTextField(
                           controller: _namaBasecampCtrl,
                           label: 'Nama Basecamp / Jalur',
                           hint: 'Contoh: Basecamp via Garung',
                           prefixIcon: Icons.signpost_outlined,
                           validator: (v) {
-                            if (_selectedRole == AppConstants.roleBasecamp && (v == null || v.trim().isEmpty)) {
+                            if (_selectedRole == AppConstants.roleBasecamp &&
+                                (v == null || v.trim().isEmpty)) {
                               return 'Nama basecamp/jalur wajib diisi';
                             }
                             return null;
                           },
+                          // fillColor: Colors.white, // <-- AKTIFKAN & UBAH WARNA BACKGROUND DI SINI
                         ),
                       ],
+
+                      // ==========================================================================
+                      // 🎨 [2. UBAH WARNA INPUTAN NAMA LENGKAP (MODE PENDAKI / USER)]
+                      // --------------------------------------------------------------------------
+                      // Cara Ubah:
+                      // - Hapus tanda '//' pada baris `fillColor` di bawah ini.
+                      // - Ganti dengan warna yang diinginkan, contoh:
+                      //   * fillColor: Colors.white, (putih bersih)
+                      //   * fillColor: const Color(0xFFEFF6FF), (biru muda pastel)
+                      // ==========================================================================
                       CustomTextField(
                         controller: _namaCtrl,
                         label: _selectedRole == AppConstants.roleBasecamp
@@ -468,40 +541,90 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             : 'Nama Lengkap',
                         prefixIcon: Icons.person_outline_rounded,
                         validator: (v) => Validators.required(v, 'Nama'),
+                        // fillColor: Colors.white, // <-- AKTIFKAN & UBAH WARNA BACKGROUND DI SINI
                       ),
+
+                      // ==========================================================================
+                      // 🎨 [3. UBAH WARNA INPUTAN EMAIL]
+                      // --------------------------------------------------------------------------
+                      // Cara Ubah:
+                      // - Hapus tanda '//' pada baris `fillColor` di bawah ini.
+                      // - Ganti dengan warna yang diinginkan, contoh:
+                      //   * fillColor: Colors.white, (putih bersih)
+                      //   * fillColor: const Color(0xFFEFF6FF), (biru muda pastel)
+                      // ==========================================================================
                       CustomTextField(
                         controller: _emailCtrl,
                         label: 'Email',
                         prefixIcon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         validator: Validators.email,
+                        // fillColor: Colors.white,  // <-- AKTIFKAN & UBAH WARNA BACKGROUND DI SINI
                       ),
+
+                      // ==========================================================================
+                      // 🎨 [4. UBAH WARNA INPUTAN KATA SANDI]
+                      // --------------------------------------------------------------------------
+                      // Cara Ubah:
+                      // - Hapus tanda '//' pada baris `fillColor` di bawah ini.
+                      // - Ganti dengan warna yang diinginkan, contoh:
+                      //   * fillColor: Colors.white, (putih bersih)
+                      //   * fillColor: const Color(0xFFF0FDF4), (hijau muda pastel)
+                      // ==========================================================================
                       CustomTextField(
                         controller: _passwordCtrl,
                         label: 'Kata Sandi',
                         prefixIcon: Icons.lock_outline_rounded,
                         isPassword: true,
                         validator: Validators.password,
+                        // fillColor: Colors.white,  // <-- AKTIFKAN & UBAH WARNA BACKGROUND DI SINI
                       ),
+
+                      // ==========================================================================
+                      // 🎨 [5. UBAH WARNA INPUTAN KONFIRMASI KATA SANDI]
+                      // --------------------------------------------------------------------------
+                      // Cara Ubah:
+                      // - Hapus tanda '//' pada baris `fillColor` di bawah ini.
+                      // - Ganti dengan warna yang diinginkan, contoh:
+                      //   * fillColor: Colors.white, (putih bersih)
+                      //   * fillColor: const Color(0xFFF0FDF4), (hijau muda pastel)
+                      // ==========================================================================
                       CustomTextField(
                         controller: _confirmCtrl,
                         label: 'Konfirmasi Kata Sandi',
                         prefixIcon: Icons.lock_outline_rounded,
                         isPassword: true,
-                        validator: (v) => Validators.confirmPassword(v, _passwordCtrl.text),
+                        validator: (v) =>
+                            Validators.confirmPassword(v, _passwordCtrl.text),
+                        // fillColor: Colors.white,  // <-- AKTIFKAN & UBAH WARNA BACKGROUND DI SINI
                       ),
                       const SizedBox(height: 12),
+
+                      // ==========================================================================
+                      // 🎨 [6. UBAH WARNA TOMBOL DAFTAR SEKARANG]
+                      // --------------------------------------------------------------------------
+                      // Cara Ubah:
+                      // 1. Warna Background (Gradien): Ganti warna di dalam `LinearGradient(colors: [...])`
+                      //    Contoh warna solid: [Colors.green, Colors.green] atau [Color(0xFF1B4332), Color(0xFF2D6A4F)]
+                      // 2. Warna Bayangan (Shadow): Ganti `color: AppTheme.primary.withValues(alpha: 0.3)` di BoxShadow
+                      // 3. Warna Teks "Daftar Sekarang": Ganti `color: Colors.white` pada TextStyle
+                      // ==========================================================================
                       Container(
                         width: double.infinity,
                         height: 50,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [AppTheme.primary, AppTheme.secondary],
+                            colors: [
+                              AppTheme.primary,
+                              AppTheme.secondary,
+                            ], // <-- UBAH WARNA BACKGROUND TOMBOL DI SINI
                           ),
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primary.withValues(alpha: 0.3),
+                              color: AppTheme.primary.withValues(
+                                alpha: 0.3,
+                              ), // <-- UBAH WARNA BAYANGAN DI SINI
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -530,7 +653,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.white,
+                                    color: Colors.white, // <-- UBAH WARNA TEKS "DAFTAR SEKARANG" DI SINI
                                   ),
                                 ),
                         ),
@@ -572,6 +695,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  // ==========================================================================
+  // 🎨 [UBAH WARNA TOMBOL PILIHAN: PENDAKI & BASECAMP]
+  // --------------------------------------------------------------------------
+  // Mengatur warna tombol tab "Pendaki" dan "Basecamp" (saat aktif / tidak aktif):
+  // - Warna Background Tombol: Ganti `color: isSelected ? AppTheme.primarySubtle : AppTheme.surface`
+  //   * Saat Aktif (terpilih): AppTheme.primarySubtle (hijau muda halus)
+  //   * Saat Tidak Aktif: AppTheme.surface (putih)
+  // - Warna Garis Border: Ganti `color: isSelected ? AppTheme.primary : AppTheme.border`
+  // - Warna Ikon Orang Mendaki & Rumah: Ganti `color: isSelected ? AppTheme.primary : AppTheme.textSecondary`
+  // - Warna Teks "Pendaki" & "Basecamp": Ganti `color: isSelected ? AppTheme.primary : AppTheme.textSecondary`
+  // ==========================================================================
   Widget _roleCard(String label, IconData icon, String role) {
     final isSelected = _selectedRole == role;
     return GestureDetector(
