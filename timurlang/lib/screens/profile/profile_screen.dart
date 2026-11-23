@@ -4,8 +4,10 @@
 // ============================================
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../config/theme.dart';
 import '../../config/routes.dart';
 import '../../services/auth_service.dart';
@@ -23,11 +25,11 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _namaCtrl = TextEditingController();
-  
+
   bool _isEditing = false;
   bool _isLoading = false;
   bool _isPersonalDataComplete = false;
-  
+
   // Holds current photo (base64 Data URI or network URL)
   String? _currentPhotoUrl;
   bool _photoChanged = false;
@@ -85,18 +87,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const Text(
                 'Pilih Sumber Foto Profil',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
               ),
               const SizedBox(height: 12),
               ListTile(
-                leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primary),
-                title: const Text('Kamera', style: TextStyle(color: AppTheme.textPrimary)),
-                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                leading: const Icon(
+                  Icons.camera_alt_outlined,
+                  color: AppTheme.primary,
+                ),
+                title: const Text(
+                  'Kamera',
+                  style: TextStyle(color: AppTheme.textPrimary),
+                ),
+                onTap: () => Get.back(result: ImageSource.camera),
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined, color: AppTheme.primary),
-                title: const Text('Galeri Foto', style: TextStyle(color: AppTheme.textPrimary)),
-                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                leading: const Icon(
+                  Icons.photo_library_outlined,
+                  color: AppTheme.primary,
+                ),
+                title: const Text(
+                  'Galeri Foto',
+                  style: TextStyle(color: AppTheme.textPrimary),
+                ),
+                onTap: () => Get.back(result: ImageSource.gallery),
               ),
             ],
           ),
@@ -163,7 +181,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result.message),
-          backgroundColor: result.success ? AppTheme.safeGreen : AppTheme.dangerRed,
+          backgroundColor: result.success
+              ? AppTheme.safeGreen
+              : AppTheme.dangerRed,
         ),
       );
     }
@@ -172,7 +192,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = AuthService.instance.currentUser;
-    if (user == null) return const Scaffold(body: Center(child: Text('Not logged in')));
+    if (user == null)
+      return const Scaffold(body: Center(child: Text('Not logged in')));
 
     final imageProvider = ImageHelper.getImageProvider(_currentPhotoUrl);
 
@@ -215,7 +236,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           : null,
                     ),
                     child: imageProvider == null
-                        ? const Icon(Icons.person_rounded, size: 68, color: AppTheme.textSecondary)
+                        ? const Icon(
+                            Icons.person_rounded,
+                            size: 68,
+                            color: AppTheme.textSecondary,
+                          )
                         : null,
                   ),
                 ),
@@ -230,7 +255,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.surface, width: 2.5),
+                          border: Border.all(
+                            color: AppTheme.surface,
+                            width: 2.5,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.2),
@@ -255,21 +283,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (!_isEditing) ...[
             Text(
               user.namaLengkap,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
             ),
             const SizedBox(height: 4),
-            Text(user.email, style: const TextStyle(color: AppTheme.textSecondary)),
+            Text(
+              user.email,
+              style: const TextStyle(color: AppTheme.textSecondary),
+            ),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
               decoration: BoxDecoration(
                 color: AppTheme.accentOrange.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.accentOrange.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: AppTheme.accentOrange.withValues(alpha: 0.5),
+                ),
               ),
-              child: Text(
-                user.peran.toUpperCase(),
-                style: const TextStyle(
+              child: const Text(
+                'PENDAKI',
+                style: TextStyle(
                   fontSize: 12,
                   color: AppTheme.accentOrange,
                   fontWeight: FontWeight.bold,
@@ -293,8 +330,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: ElevatedButton.icon(
                 onPressed: () => setState(() => _isEditing = true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary, // <-- UBAH WARNA BACKGROUND TOMBOL DI SINI
-                  foregroundColor: Colors.white,      // <-- UBAH WARNA TEKS & IKON DI SINI
+                  backgroundColor: AppTheme
+                      .primary, // <-- UBAH WARNA BACKGROUND TOMBOL DI SINI
+                  foregroundColor:
+                      Colors.white, // <-- UBAH WARNA TEKS & IKON DI SINI
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -316,58 +355,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // - Warna Background Card: Ganti `color: AppTheme.surface` (contoh: Colors.white)
             // - Warna Switch Aktif: Ganti `activeThumbColor: AppTheme.primaryGreen`
             // ==========================================================================
-            // ── Keamanan & Biometrik ──
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.border, width: 1), // <-- UBAH BORDER LOGIN SIDIK JARI DI SINI
-              ),
-              child: SwitchListTile(
-                value: user.isBiometricEnabled,
-                activeThumbColor: AppTheme.primaryGreen,
-                secondary: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.fingerprint, color: AppTheme.primaryGreen),
-                ),
-                title: const Text('Login Sidik Jari', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppTheme.textPrimary)),
-                subtitle: Text(
-                  user.isBiometricEnabled
-                      ? 'Sidik jari aktif untuk login cepat'
-                      : 'Aktifkan untuk masuk tanpa kata sandi',
-                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                ),
-                onChanged: (bool value) async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  if (value) {
-                    final res = await AuthService.instance.enableBiometric();
-                    if (!mounted) return;
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text(res.message),
-                        backgroundColor: res.success ? AppTheme.safeGreen : AppTheme.dangerRed,
-                      ),
-                    );
-                    setState(() {});
-                  } else {
-                    final res = await AuthService.instance.disableBiometric();
-                    if (!mounted) return;
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text(res.message),
-                        backgroundColor: res.success ? AppTheme.safeGreen : AppTheme.dangerRed,
-                      ),
-                    );
-                    setState(() {});
-                  }
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
 
             // ==========================================================================
             // 🎨 [3. UBAH WARNA & BORDER CARD DATA DIRI LENGKAP]
@@ -382,12 +369,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // ── Data Diri Pendaki (Wajib SIMAKSI) ──
             Container(
               decoration: BoxDecoration(
-                color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
+                color:
+                    AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _isPersonalDataComplete
                       ? AppTheme.safeGreen.withValues(alpha: 0.35)
-                      : AppTheme.accentOrange.withValues(alpha: 0.4), // <-- UBAH BORDER DATA DIRI DI SINI
+                      : AppTheme.accentOrange.withValues(
+                          alpha: 0.4,
+                        ), // <-- UBAH BORDER DATA DIRI DI SINI
                   width: 1,
                 ),
               ),
@@ -395,28 +385,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: (_isPersonalDataComplete ? AppTheme.safeGreen : AppTheme.accentOrange)
-                        .withValues(alpha: 0.15),
+                    color:
+                        (_isPersonalDataComplete
+                                ? AppTheme.safeGreen
+                                : AppTheme.accentOrange)
+                            .withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.badge_outlined,
-                    color: _isPersonalDataComplete ? AppTheme.safeGreen : AppTheme.accentOrange,
+                    color: _isPersonalDataComplete
+                        ? AppTheme.safeGreen
+                        : AppTheme.accentOrange,
                   ),
                 ),
                 title: const Text(
                   'Data Diri Lengkap',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppTheme.textPrimary),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
                 subtitle: Text(
                   _isPersonalDataComplete
                       ? 'KTP, identitas & alamat domisili terverifikasi'
                       : 'Wajib diisi untuk pengajuan izin pendakian SIMAKSI',
-                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
-                trailing: const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.textSecondary,
+                ),
                 onTap: () async {
-                  await Navigator.pushNamed(context, AppRoutes.personalData);
+                  await Get.toNamed(AppRoutes.personalData);
                   _checkPersonalDataStatus();
                 },
               ),
@@ -435,9 +440,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // ── Rekam Medis Darurat ──
             Container(
               decoration: BoxDecoration(
-                color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
+                color:
+                    AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.border, width: 1), // <-- UBAH BORDER DATA REKAM MEDIS DI SINI
+                border: Border.all(
+                  color: AppTheme.border,
+                  width: 1,
+                ), // <-- UBAH BORDER DATA REKAM MEDIS DI SINI
               ),
               child: ListTile(
                 leading: Container(
@@ -446,16 +455,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: AppTheme.dangerRed.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.medical_services_outlined, color: AppTheme.dangerRed),
+                  child: const Icon(
+                    Icons.medical_services_outlined,
+                    color: AppTheme.dangerRed,
+                  ),
                 ),
-                title: const Text('Data Rekam Medis', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                title: const Text(
+                  'Data Rekam Medis',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                ),
                 subtitle: Text(
                   'Data medis & kontak darurat (Dilindungi Sidik Jari)',
                   style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
-                trailing: const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.textSecondary,
+                ),
                 onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.medicalProfile);
+                  Get.toNamed(AppRoutes.medicalProfile);
                 },
               ),
             ),
@@ -474,9 +492,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // ── Tombol Keluar dari Akun ──
             Container(
               decoration: BoxDecoration(
-                color: AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
+                color:
+                    AppTheme.surface, // <-- UBAH WARNA BACKGROUND KARTU DI SINI
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.error.withValues(alpha: 0.35), width: 1.2), // <-- UBAH BORDER KELUAR AKUN DI SINI
+                border: Border.all(
+                  color: AppTheme.error.withValues(alpha: 0.35),
+                  width: 1.2,
+                ), // <-- UBAH BORDER KELUAR AKUN DI SINI
               ),
               child: ListTile(
                 leading: Container(
@@ -485,7 +507,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: AppTheme.error.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.logout_rounded, color: AppTheme.error, size: 22),
+                  child: const Icon(
+                    Icons.logout_rounded,
+                    color: AppTheme.error,
+                    size: 22,
+                  ),
                 ),
                 title: Text(
                   'Keluar dari Akun',
@@ -502,7 +528,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: AppTheme.textSecondary,
                   ),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.error),
+                trailing: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppTheme.error,
+                ),
                 onTap: _showLogoutDialog,
               ),
             ),
@@ -524,14 +553,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: AppTheme.accentOrange, size: 20),
+                  const Icon(
+                    Icons.info_outline,
+                    color: AppTheme.accentOrange,
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      _photoChanged
-                          ? 'Foto baru siap disimpan ke database.'
-                          : 'Ketuk foto di atas untuk mengambil foto atau memilih dari galeri.',
-                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                      _photoChanged ? 'Foto baru siap disimpan ke database.' : 'Ketuk foto di atas untuk mengambil foto atau memilih dari galeri.',
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],
@@ -560,7 +594,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           )
                         : const Text('Simpan'),
                   ),
@@ -608,7 +645,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         actions: [
           OutlinedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Get.back(),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppTheme.border, width: 1),
               shape: const StadiumBorder(),
@@ -625,9 +662,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ElevatedButton(
             onPressed: () async {
               await AuthService.instance.logout();
-              if (!context.mounted) return;
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, AppRoutes.login);
+              Get.back();
+              Get.offAllNamed(AppRoutes.login);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.error,

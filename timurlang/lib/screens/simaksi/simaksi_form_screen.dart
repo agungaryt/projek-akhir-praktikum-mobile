@@ -4,17 +4,21 @@
 // ============================================
 
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
+
 import '../../config/theme.dart';
 import '../../config/routes.dart';
 import '../../models/mountain.dart';
-import '../../models/basecamp_post.dart';
+
+import 'package:get/get.dart';
+
 import '../../models/user.dart';
 import '../../models/medical_profile.dart';
 import '../../models/user_personal_data.dart';
 import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
-import '../../services/supabase_service.dart';
+
 import '../../utils/date_utils.dart';
 import '../../utils/image_helper.dart';
 import '../../utils/time_zone_helper.dart';
@@ -30,9 +34,9 @@ class _MemberFormControllers {
     String nama = '',
     String alamat = '',
     String kontakDarurat = '',
-  })  : namaCtrl = TextEditingController(text: nama),
-        alamatCtrl = TextEditingController(text: alamat),
-        kontakDaruratCtrl = TextEditingController(text: kontakDarurat);
+  }) : namaCtrl = TextEditingController(text: nama),
+       alamatCtrl = TextEditingController(text: alamat),
+       kontakDaruratCtrl = TextEditingController(text: kontakDarurat);
 
   void dispose() {
     namaCtrl.dispose();
@@ -54,9 +58,7 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
 
   Mountain? _mountain;
   List<Mountain> _mountains = [];
-  List<BasecampPost> _basecamps = [];
-  BasecampPost? _selectedBasecamp;
-  bool _isLoadingBasecamps = false;
+  String _selectedJalur = 'Jalur Utama';
   bool _isMountainLocked = false;
 
   User? _currentUser;
@@ -90,8 +92,12 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
     final user = AuthService.instance.currentUser;
     if (user != null) {
       _currentUser = user;
-      final med = await DatabaseService.instance.getMedicalProfile(user.id);
-      final personal = await DatabaseService.instance.getPersonalData(user.id);
+      final med = await DatabaseService.instance.getMedicalProfileByUserId(
+        user.id,
+      );
+      final personal = await DatabaseService.instance.getPersonalDataByUserId(
+        user.id,
+      );
       if (mounted) {
         setState(() {
           _userMedicalProfile = med;
@@ -122,12 +128,20 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
         ),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: AppTheme.warning, size: 28),
+            Icon(
+              Icons.warning_amber_rounded,
+              color: AppTheme.warning,
+              size: 28,
+            ),
             SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Data Diri Belum Lengkap',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
               ),
             ),
           ],
@@ -138,12 +152,20 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
           children: [
             Text(
               'Syarat Wajib SIMAKSI:',
-              style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 14),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primary,
+                fontSize: 14,
+              ),
             ),
             SizedBox(height: 6),
             Text(
               'Sesuai regulasi pendaftaran SIMAKSI, ketua pendaki wajib melengkapi data identitas resmi (KTP/identitas, kontak darurat, alamat lengkap, dan data fisik) sebelum dapat melakukan reservasi tiket.',
-              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppTheme.textSecondary,
+                height: 1.4,
+              ),
             ),
             SizedBox(height: 12),
             Text(
@@ -154,17 +176,22 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Nanti Saja', style: TextStyle(color: AppTheme.textSecondary)),
+            onPressed: () => Get.back(result: false),
+            child: const Text(
+              'Nanti Saja',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ),
           ElevatedButton.icon(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () => Get.back(result: true),
             icon: const Icon(Icons.badge, size: 18),
             label: const Text('Isi Data Diri Sekarang'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],
@@ -172,7 +199,7 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
     );
 
     if (shouldFill == true && mounted) {
-      await Navigator.pushNamed(context, AppRoutes.personalData);
+      await Get.toNamed(AppRoutes.personalData);
       if (mounted) {
         await _loadCurrentUserData();
       }
@@ -207,7 +234,9 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Maksimal anggota rombongan adalah 10 orang (termasuk ketua).'),
+            content: Text(
+              'Maksimal anggota rombongan adalah 10 orang (termasuk ketua).',
+            ),
             duration: Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -247,7 +276,7 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_mountain == null) {
-      final args = ModalRoute.of(context)?.settings.arguments;
+      final args = Get.arguments ?? ModalRoute.of(context)?.settings.arguments;
       Mountain? argMountain;
       String? mountainId;
       String? targetBasecampId;
@@ -273,10 +302,6 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
         }
         if (args['basecampId'] is String) {
           targetBasecampId = args['basecampId'] as String;
-        }
-        if (args['basecamp'] is BasecampPost) {
-          targetBasecampId = (args['basecamp'] as BasecampPost).id;
-          targetBasecampName = (args['basecamp'] as BasecampPost).namaPos;
         }
         if (args['basecampName'] is String) {
           targetBasecampName = args['basecampName'] as String;
@@ -320,68 +345,22 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
     });
 
     if (_mountain != null) {
-      _loadBasecampsForMountain(
-        _mountain!.id,
-        targetBasecampId: targetBasecampId,
-        targetBasecampName: targetBasecampName,
-      );
+      setState(() {
+        _selectedJalur = 'Jalur Resmi ${_mountain!.namaGunung}';
+      });
     }
   }
 
-  Future<void> _loadBasecampsForMountain(
-    String gunungId, {
-    String? targetBasecampId,
-    String? targetBasecampName,
-  }) async {
+  Future<void> _loadBasecampsForMountain(String gunungId) async {
     setState(() {
-      _isLoadingBasecamps = true;
-      _selectedBasecamp = null;
-    });
-
-    // Tarik pos basecamp terbaru dari server Supabase agar pos yang baru didaftarkan akun basecamp muncul
-    if (SupabaseService.instance.isInitialized) {
-      try {
-        final remoteBasecamps = await SupabaseService.instance.getBasecampsByMountain(gunungId);
-        for (final bc in remoteBasecamps) {
-          await DatabaseService.instance.insertBasecampPost(bc);
-        }
-      } catch (e) {
-        debugPrint('⚠️ Gagal pull basecamp dari Supabase: $e');
-      }
-    }
-
-    final bcs = await DatabaseService.instance.getRegisteredBasecampsByMountain(gunungId);
-    if (!mounted) return;
-
-    setState(() {
-      _basecamps = bcs;
-      if (_basecamps.isNotEmpty) {
-        BasecampPost? matched;
-        if (targetBasecampId != null || targetBasecampName != null) {
-          for (final b in _basecamps) {
-            if (targetBasecampId != null && b.id == targetBasecampId) {
-              matched = b;
-              break;
-            }
-            if (targetBasecampName != null &&
-                (b.namaPos.toLowerCase().trim() == targetBasecampName.toLowerCase().trim() ||
-                 b.namaPos.toLowerCase().contains(targetBasecampName.toLowerCase().trim()) ||
-                 targetBasecampName.toLowerCase().contains(b.namaPos.toLowerCase().trim()))) {
-              matched = b;
-              break;
-            }
-          }
-        }
-        _selectedBasecamp = matched ?? _basecamps.first;
-      }
-      _isLoadingBasecamps = false;
+      _selectedJalur = 'Jalur Resmi ${_mountain?.namaGunung ?? ""}';
     });
   }
 
   Future<void> _pickDate(bool isNaik) async {
     final now = DateTime.now();
     final firstDate = isNaik ? now : (_tanggalNaik ?? now);
-    
+
     final date = await showDatePicker(
       context: context,
       initialDate: firstDate,
@@ -419,15 +398,7 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
       );
       return;
     }
-    if (_selectedBasecamp == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pilih basecamp / jalur pendakian yang terdaftar terlebih dahulu'),
-          backgroundColor: AppTheme.dangerRed,
-        ),
-      );
-      return;
-    }
+
     if (_tanggalNaik == null || _tanggalTurun == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pilih tanggal naik dan turun')),
@@ -436,10 +407,14 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
     }
 
     final int? parsedAnggota = int.tryParse(_anggotaCtrl.text);
-    if (parsedAnggota == null || parsedAnggota < 1 || parsedAnggota > maxAnggota) {
+    if (parsedAnggota == null ||
+        parsedAnggota < 1 ||
+        parsedAnggota > maxAnggota) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Jumlah anggota rombongan harus antara 1 sampai 10 orang.'),
+          content: Text(
+            'Jumlah anggota rombongan harus antara 1 sampai 10 orang.',
+          ),
           backgroundColor: AppTheme.dangerRed,
         ),
       );
@@ -447,23 +422,11 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
     }
     final int jumlahAnggota = parsedAnggota;
 
-    // Cek status buka/tutup basecamp
-    if (!_selectedBasecamp!.isBuka) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Jalur di ${_selectedBasecamp!.namaPos} sedang DITUTUP oleh pengelola basecamp.'),
-          backgroundColor: AppTheme.dangerRed,
-        ),
-      );
-      return;
-    }
-
-    // Cek sisa kuota hari ini di basecamp
-    if (jumlahAnggota > _selectedBasecamp!.sisaKuotaHariIni) {
+    if (_mountain!.statusJalur == 'Tutup') {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Jumlah rombongan ($jumlahAnggota orang) melebihi sisa kuota hari ini di ${_selectedBasecamp!.namaPos} (tersisa ${_selectedBasecamp!.sisaKuotaHariIni} kuota).',
+            'Jalur pendakian ${_mountain!.namaGunung} sedang DITUTUP.',
           ),
           backgroundColor: AppTheme.dangerRed,
         ),
@@ -475,15 +438,21 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
     final List<Map<String, dynamic>> membersList = [];
 
     // 1. Ketua Kelompok (Pengguna aplikasi yang login)
-    final String namaKetua = _userPersonalData != null && _userPersonalData!.namaLengkap.isNotEmpty
-        ? '${_userPersonalData!.namaLengkap} ${_userPersonalData!.namaBelakang}'.trim()
+    final String namaKetua =
+        _userPersonalData != null && _userPersonalData!.namaLengkap.isNotEmpty
+        ? '${_userPersonalData!.namaLengkap} ${_userPersonalData!.namaBelakang}'
+              .trim()
         : (_currentUser?.namaLengkap ?? 'Ketua Kelompok');
-    final String alamatKetua = _userPersonalData != null && _userPersonalData!.alamat.isNotEmpty
+    final String alamatKetua =
+        _userPersonalData != null && _userPersonalData!.alamat.isNotEmpty
         ? '${_userPersonalData!.alamat}, ${_userPersonalData!.kelurahan}, ${_userPersonalData!.kecamatan}, ${_userPersonalData!.kotaKabupaten}, ${_userPersonalData!.provinsi}'
         : 'Sesuai Profil Pengguna';
-    final String kontakDaruratKetua = _userPersonalData != null && _userPersonalData!.noTeleponDarurat.isNotEmpty
+    final String kontakDaruratKetua =
+        _userPersonalData != null &&
+            _userPersonalData!.noTeleponDarurat.isNotEmpty
         ? _userPersonalData!.noTeleponDarurat
-        : (_userMedicalProfile?.kontakDaruratTelepon ?? (_currentUser?.email ?? '-'));
+        : (_userMedicalProfile?.kontakDaruratTelepon ??
+              (_currentUser?.email ?? '-'));
 
     membersList.add({
       'nama': namaKetua,
@@ -507,24 +476,25 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
 
     final String dataAnggotaJson = jsonEncode(membersList);
 
-    // Biaya SIMAKSI dihitung berdasarkan tarif resmi per basecamp (per orang)
-    final double baseBiayaPerOrang = _selectedBasecamp!.hargaSimaksi;
+    const double baseBiayaPerOrang = 15000.0;
     final double totalBiaya = baseBiayaPerOrang * jumlahAnggota;
 
-    Navigator.pushNamed(
-      context,
+    Get.toNamed(
       AppRoutes.simaksiPayment,
       arguments: {
         'mountain': _mountain,
-        'basecamp': _selectedBasecamp,
-        'basecampId': _selectedBasecamp!.id,
-        'namaBasecamp': _selectedBasecamp!.namaPos,
+        'basecampId': 'jalur-${_mountain!.id}',
+        'namaBasecamp': _selectedJalur,
         'hargaSimaksi': baseBiayaPerOrang,
         'tanggalNaik': _tanggalNaik,
         'tanggalTurun': _tanggalTurun,
         'jumlahAnggota': jumlahAnggota,
         'totalBiayaIDR': totalBiaya,
-        'timezone': _mountain != null ? TimeZoneHelper.getMountainTimeZone(mountainName: _mountain!.namaGunung) : 'WIB',
+        'timezone': _mountain != null
+            ? TimeZoneHelper.getMountainTimeZone(
+                mountainName: _mountain!.namaGunung,
+              )
+            : 'WIB',
         'membersList': membersList,
         'dataAnggota': dataAnggotaJson,
       },
@@ -552,7 +522,8 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_mountain == null) return const Scaffold(body: Center(child: Text('Memuat formulir...')));
+    if (_mountain == null)
+      return const Scaffold(body: Center(child: Text('Memuat formulir...')));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Formulir Simaksi')),
@@ -567,11 +538,22 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Gunung Tujuan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                  const Text(
+                    'Gunung Tujuan',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
                   if (!_isMountainLocked && _mountains.isNotEmpty)
                     const Text(
                       'Ketuk untuk ganti',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primary),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primary,
+                      ),
                     ),
                 ],
               ),
@@ -609,10 +591,18 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(4.5),
                                         decoration: BoxDecoration(
-                                          color: AppTheme.primary.withValues(alpha: 0.12),
-                                          borderRadius: BorderRadius.circular(6),
+                                          color: AppTheme.primary.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
                                         ),
-                                        child: const Icon(Icons.terrain_rounded, size: 14, color: AppTheme.primary),
+                                        child: const Icon(
+                                          Icons.terrain_rounded,
+                                          size: 14,
+                                          color: AppTheme.primary,
+                                        ),
                                       ),
                                       const SizedBox(width: 8),
                                       const Flexible(
@@ -632,18 +622,26 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 9,
+                                    vertical: 3.5,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: (_mountain?.statusJalur.toLowerCase() == 'tutup'
-                                            ? AppTheme.dangerRed
-                                            : AppTheme.safeGreen)
-                                        .withValues(alpha: 0.12),
+                                    color:
+                                        (_mountain?.statusJalur.toLowerCase() ==
+                                                    'tutup'
+                                                ? AppTheme.dangerRed
+                                                : AppTheme.safeGreen)
+                                            .withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(999),
                                     border: Border.all(
-                                      color: (_mountain?.statusJalur.toLowerCase() == 'tutup'
-                                              ? AppTheme.dangerRed
-                                              : AppTheme.safeGreen)
-                                          .withValues(alpha: 0.35),
+                                      color:
+                                          (_mountain?.statusJalur
+                                                          .toLowerCase() ==
+                                                      'tutup'
+                                                  ? AppTheme.dangerRed
+                                                  : AppTheme.safeGreen)
+                                              .withValues(alpha: 0.35),
                                     ),
                                   ),
                                   child: Row(
@@ -654,7 +652,10 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                                         height: 6,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: _mountain?.statusJalur.toLowerCase() == 'tutup'
+                                          color:
+                                              _mountain?.statusJalur
+                                                      .toLowerCase() ==
+                                                  'tutup'
                                               ? AppTheme.dangerRed
                                               : AppTheme.safeGreen,
                                         ),
@@ -665,7 +666,10 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
-                                          color: _mountain?.statusJalur.toLowerCase() == 'tutup'
+                                          color:
+                                              _mountain?.statusJalur
+                                                      .toLowerCase() ==
+                                                  'tutup'
                                               ? AppTheme.dangerRed
                                               : AppTheme.safeGreen,
                                         ),
@@ -682,26 +686,40 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(14),
                                   child: Image(
-                                    image: ImageHelper.getImageProvider(_mountain?.fotoUrl, _mountain?.namaGunung) ??
-                                        const AssetImage('assets/images/Foto Gunung/Merbabu.webp'),
+                                    image:
+                                        ImageHelper.getImageProvider(
+                                          _mountain?.fotoUrl,
+                                          _mountain?.namaGunung,
+                                        ) ??
+                                        const AssetImage(
+                                          'assets/images/Foto Gunung/Merbabu.webp',
+                                        ),
                                     width: 66,
                                     height: 66,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Container(
-                                      width: 66,
-                                      height: 66,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primarySubtle,
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      child: const Icon(Icons.terrain_rounded, color: AppTheme.primary, size: 30),
-                                    ),
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
+                                              width: 66,
+                                              height: 66,
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primarySubtle,
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                              child: const Icon(
+                                                Icons.terrain_rounded,
+                                                color: AppTheme.primary,
+                                                size: 30,
+                                              ),
+                                            ),
                                   ),
                                 ),
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         _mountain?.namaGunung ?? 'Memuat...',
@@ -715,40 +733,59 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                                       Wrap(
                                         spacing: 6,
                                         runSpacing: 4,
-                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
                                         children: [
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 7,
+                                              vertical: 3,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: AppTheme.surfaceSubtle,
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: AppTheme.border),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: AppTheme.border,
+                                              ),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                const Icon(Icons.height_rounded, size: 13, color: AppTheme.textSecondary),
+                                                const Icon(
+                                                  Icons.height_rounded,
+                                                  size: 13,
+                                                  color: AppTheme.textSecondary,
+                                                ),
                                                 const SizedBox(width: 3),
                                                 Text(
                                                   '${_mountain?.elevasiMdpl ?? 0} MDPL',
                                                   style: const TextStyle(
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.w600,
-                                                    color: AppTheme.textSecondary,
+                                                    color:
+                                                        AppTheme.textSecondary,
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 7,
+                                              vertical: 3,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: AppTheme.surfaceSubtle,
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: AppTheme.border),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: AppTheme.border,
+                                              ),
                                             ),
                                             child: Text(
-                                              _mountain?.tingkatBahaya ?? 'Grade Standar',
+                                              _mountain?.tingkatBahaya ??
+                                                  'Grade Standar',
                                               style: const TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w600,
@@ -767,13 +804,19 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                         ),
                       )
                     : Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: _mountain?.id,
                             isExpanded: true,
                             dropdownColor: AppTheme.surface,
-                            icon: const Icon(Icons.arrow_drop_down, color: AppTheme.primary),
+                            icon: const Icon(
+                              Icons.arrow_drop_down,
+                              color: AppTheme.primary,
+                            ),
                             items: _mountains.map((m) {
                               return DropdownMenuItem<String>(
                                 value: m.id,
@@ -782,22 +825,49 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: Image(
-                                        image: ImageHelper.getImageProvider(m.fotoUrl, m.namaGunung) ??
-                                            const AssetImage('assets/images/Foto Gunung/Merbabu.webp'),
+                                        image:
+                                            ImageHelper.getImageProvider(
+                                              m.fotoUrl,
+                                              m.namaGunung,
+                                            ) ??
+                                            const AssetImage(
+                                              'assets/images/Foto Gunung/Merbabu.webp',
+                                            ),
                                         width: 36,
                                         height: 36,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.terrain, color: AppTheme.primary, size: 22),
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                const Icon(
+                                                  Icons.terrain,
+                                                  color: AppTheme.primary,
+                                                  size: 22,
+                                                ),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
-                                          Text(m.namaGunung, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: AppTheme.textPrimary)),
-                                          Text('${m.elevasiMdpl} MDPL • Status: ${m.statusJalur}', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                                          Text(
+                                            m.namaGunung,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14.5,
+                                              color: AppTheme.textPrimary,
+                                            ),
+                                          ),
+                                          Text(
+                                            '${m.elevasiMdpl} MDPL • Status: ${m.statusJalur}',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -807,7 +877,9 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                             }).toList(),
                             onChanged: (newId) {
                               if (newId != null) {
-                                final selected = _mountains.firstWhere((m) => m.id == newId);
+                                final selected = _mountains.firstWhere(
+                                  (m) => m.id == newId,
+                                );
                                 setState(() => _mountain = selected);
                                 _loadBasecampsForMountain(newId);
                               }
@@ -819,7 +891,14 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
               const SizedBox(height: 20),
 
               // Basecamp / Jalur Pendakian Selection
-              const Text('Pilih Basecamp / Jalur Pendakian', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+              const Text(
+                'Pilih Basecamp / Jalur Pendakian',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
               const SizedBox(height: 4),
               const Text(
                 'Pilih basecamp resmi tempat registrasi awal & tujuan siaga darurat:',
@@ -827,182 +906,110 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
               ),
               const SizedBox(height: 8),
 
-              if (_isLoadingBasecamps)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)),
-                )
-              else if (_basecamps.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.error.withValues(alpha: 0.3)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.warning_amber_rounded, color: AppTheme.error),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Belum ada akun basecamp yang terdaftar untuk gunung ini. Pastikan pengelola pos telah meregistrasi akun basecamp.',
-                          style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.border),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedBasecamp?.id,
-                      isExpanded: true,
-                      dropdownColor: AppTheme.surface,
-                      icon: const Icon(Icons.arrow_drop_down, color: AppTheme.primary),
-                      items: _basecamps.map((bc) {
-                        final isBuka = bc.isBuka;
-                        return DropdownMenuItem<String>(
-                          value: bc.id,
-                          child: Row(
-                            children: [
-                              Icon(
-                                isBuka ? Icons.holiday_village_outlined : Icons.do_not_disturb_on_outlined,
-                                color: isBuka ? AppTheme.primary : AppTheme.error,
-                                size: 22,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      bc.namaPos,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        color: isBuka ? AppTheme.textPrimary : AppTheme.textSecondary,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Sisa Kuota: ${bc.sisaKuotaHariIni}/${bc.kuotaHarian} • Rp ${bc.hargaSimaksi.toInt()}/orang',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: isBuka ? AppTheme.textSecondary : AppTheme.error.withValues(alpha: 0.8),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: (isBuka ? AppTheme.success : AppTheme.error).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  isBuka ? 'Buka' : 'Tutup',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    color: isBuka ? AppTheme.success : AppTheme.error,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (bcId) {
-                        if (bcId != null) {
-                          setState(() {
-                            _selectedBasecamp = _basecamps.firstWhere((b) => b.id == bcId);
-                          });
-                        }
-                      },
-                    ),
-                  ),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.border),
                 ),
-
-              // Detail Operasional Basecamp Terpilih
-              if (_selectedBasecamp != null) ...[
-                const SizedBox(height: 8),
-                if (!_selectedBasecamp!.isBuka)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.error.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: AppTheme.error, size: 22),
-                        SizedBox(width: 10),
+                        const Icon(
+                          Icons.alt_route_rounded,
+                          color: AppTheme.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Jalur di ${_selectedBasecamp!.namaPos} sedang DITUTUP oleh pengelola basecamp. Pilih basecamp lain untuk melanjutkan pendaftaran.',
-                            style: const TextStyle(fontSize: 12, color: AppTheme.error, fontWeight: FontWeight.w500),
+                            'Jalur Resmi ${_mountain?.namaGunung ?? ""}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                ((_mountain?.statusJalur == 'Buka')
+                                        ? AppTheme.success
+                                        : AppTheme.error)
+                                    .withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            _mountain?.statusJalur == 'Buka' ? 'Buka' : 'Tutup',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: (_mountain?.statusJalur == 'Buka')
+                                  ? AppTheme.success
+                                  : AppTheme.error,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  )
-                else
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.border),
-                    ),
-                    child: Row(
+                    const SizedBox(height: 10),
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         Column(
                           children: [
-                            const Text('Status Jalur', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+                            const Text(
+                              'Tarif SIMAKSI',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
                             const SizedBox(height: 2),
-                            Text(
-                              _selectedBasecamp!.statusJalur,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.success),
+                            const Text(
+                              'Rp 15.000 / orang',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primary,
+                              ),
                             ),
                           ],
                         ),
-                        Container(width: 1, height: 24, color: AppTheme.border),
+                        Container(width: 1, height: 20, color: AppTheme.border),
                         Column(
                           children: [
-                            const Text('Sisa Kuota Hari Ini', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${_selectedBasecamp!.sisaKuotaHariIni} / ${_selectedBasecamp!.kuotaHarian}',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.secondary),
+                            const Text(
+                              'Kuota Harian',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppTheme.textSecondary,
+                              ),
                             ),
-                          ],
-                        ),
-                        Container(width: 1, height: 24, color: AppTheme.border),
-                        Column(
-                          children: [
-                            const Text('Tarif SIMAKSI', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
                             const SizedBox(height: 2),
                             Text(
-                              'Rp ${_selectedBasecamp!.hargaSimaksi.toInt()}/hr',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                              '${_mountain?.kuotaHarian ?? 100} Orang/Hari',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.secondary,
+                              ),
                             ),
                           ],
                         ),
                       ],
                     ),
-                  ),
-              ],
+                  ],
+                ),
+              ),
               const SizedBox(height: 24),
 
               // Date Selection (Desain interaktif & jelas)
@@ -1012,26 +1019,43 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                   const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.calendar_month_rounded, color: AppTheme.primary, size: 20),
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        color: AppTheme.primary,
+                        size: 20,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Jadwal Pendakian',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
                       ),
                     ],
                   ),
                   if (_tanggalNaik != null && _tanggalTurun != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: AppTheme.primary.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.timelapse_rounded, size: 13, color: AppTheme.primary),
+                          const Icon(
+                            Icons.timelapse_rounded,
+                            size: 13,
+                            color: AppTheme.primary,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${_tanggalTurun!.difference(_tanggalNaik!).inDays + 1} Hari Pendakian',
@@ -1083,14 +1107,23 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                 children: [
                   const Text(
                     'Jumlah Anggota Rombongan',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppTheme.primary.withValues(alpha: 0.25)),
+                      border: Border.all(
+                        color: AppTheme.primary.withValues(alpha: 0.25),
+                      ),
                     ),
                     child: const Text(
                       'Maks. 10 Orang',
@@ -1119,7 +1152,8 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                       hint: '1 - 10 orang',
                       keyboardType: TextInputType.number,
                       prefixIcon: Icons.people_outline,
-                      validator: (v) => Validators.range(v, 1, maxAnggota, 'Jumlah anggota'),
+                      validator: (v) =>
+                          Validators.range(v, 1, maxAnggota, 'Jumlah anggota'),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1134,15 +1168,24 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.border, width: 1.2),
+                          border: Border.all(
+                            color: AppTheme.border,
+                            width: 1.2,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               icon: const Icon(Icons.remove, size: 20),
-                              onPressed: canDecrease ? () => _updateAnggotaCount(-1) : null,
-                              color: canDecrease ? AppTheme.textPrimary : AppTheme.textSecondary.withValues(alpha: 0.3),
+                              onPressed: canDecrease
+                                  ? () => _updateAnggotaCount(-1)
+                                  : null,
+                              color: canDecrease
+                                  ? AppTheme.textPrimary
+                                  : AppTheme.textSecondary.withValues(
+                                      alpha: 0.3,
+                                    ),
                               tooltip: 'Kurangi Anggota',
                             ),
                             Container(
@@ -1152,8 +1195,14 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                             ),
                             IconButton(
                               icon: const Icon(Icons.add, size: 20),
-                              onPressed: canIncrease ? () => _updateAnggotaCount(1) : null,
-                              color: canIncrease ? AppTheme.primary : AppTheme.textSecondary.withValues(alpha: 0.3),
+                              onPressed: canIncrease
+                                  ? () => _updateAnggotaCount(1)
+                                  : null,
+                              color: canIncrease
+                                  ? AppTheme.primary
+                                  : AppTheme.textSecondary.withValues(
+                                      alpha: 0.3,
+                                    ),
                               tooltip: 'Tambah Anggota (Maks. 10)',
                             ),
                           ],
@@ -1200,19 +1249,30 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            (_userPersonalData?.isComplete == true) ? Icons.verified_user : Icons.warning_amber_rounded,
-                            color: (_userPersonalData?.isComplete == true) ? AppTheme.primary : AppTheme.warning,
+                            (_userPersonalData?.isComplete == true)
+                                ? Icons.verified_user
+                                : Icons.warning_amber_rounded,
+                            color: (_userPersonalData?.isComplete == true)
+                                ? AppTheme.primary
+                                : AppTheme.warning,
                             size: 18,
                           ),
                         ),
                         const SizedBox(width: 10),
                         const Text(
                           'Ketua Rombongan (Anda)',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: (_userPersonalData?.isComplete == true)
                                 ? AppTheme.primarySubtle
@@ -1225,10 +1285,14 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                             ),
                           ),
                           child: Text(
-                            (_userPersonalData?.isComplete == true) ? 'Data Lengkap' : 'Belum Lengkap',
+                            (_userPersonalData?.isComplete == true)
+                                ? 'Data Lengkap'
+                                : 'Belum Lengkap',
                             style: TextStyle(
                               fontSize: 10.5,
-                              color: (_userPersonalData?.isComplete == true) ? AppTheme.primary : const Color(0xFF92400E),
+                              color: (_userPersonalData?.isComplete == true)
+                                  ? AppTheme.primary
+                                  : const Color(0xFF92400E),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1240,12 +1304,21 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                     if (_userPersonalData?.isComplete == true) ...[
                       Row(
                         children: [
-                          const Icon(Icons.person, size: 16, color: AppTheme.primary),
+                          const Icon(
+                            Icons.person,
+                            size: 16,
+                            color: AppTheme.primary,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '${_userPersonalData!.namaLengkap} ${_userPersonalData!.namaBelakang}'.trim(),
-                              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                              '${_userPersonalData!.namaLengkap} ${_userPersonalData!.namaBelakang}'
+                                  .trim(),
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
+                              ),
                             ),
                           ),
                         ],
@@ -1253,12 +1326,20 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.badge, size: 16, color: AppTheme.textSecondary),
+                          const Icon(
+                            Icons.badge,
+                            size: 16,
+                            color: AppTheme.textSecondary,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               '${_userPersonalData!.jenisIdentitas}: ${_userPersonalData!.nomorKtp}',
-                              style: const TextStyle(fontSize: 12.5, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
@@ -1266,12 +1347,20 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.phone, size: 16, color: AppTheme.textSecondary),
+                          const Icon(
+                            Icons.phone,
+                            size: 16,
+                            color: AppTheme.textSecondary,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'No. HP: ${_userPersonalData!.noTelepon}',
-                              style: const TextStyle(fontSize: 12.5, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
@@ -1279,12 +1368,20 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.contact_phone, size: 16, color: AppTheme.secondary),
+                          const Icon(
+                            Icons.contact_phone,
+                            size: 16,
+                            color: AppTheme.secondary,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Kontak Darurat: ${_userPersonalData!.noTeleponDarurat}',
-                              style: const TextStyle(fontSize: 12.5, color: AppTheme.secondary, fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: AppTheme.secondary,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],
@@ -1293,12 +1390,20 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.location_on, size: 16, color: AppTheme.textSecondary),
+                          const Icon(
+                            Icons.location_on,
+                            size: 16,
+                            color: AppTheme.textSecondary,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               '${_userPersonalData!.alamat}, ${_userPersonalData!.kelurahan}, ${_userPersonalData!.kecamatan}, ${_userPersonalData!.kotaKabupaten}, ${_userPersonalData!.provinsi}',
-                              style: const TextStyle(fontSize: 11.5, color: AppTheme.textSecondary, height: 1.35),
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: AppTheme.textSecondary,
+                                height: 1.35,
+                              ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1310,15 +1415,20 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () async {
-                            await Navigator.pushNamed(context, AppRoutes.personalData);
+                            await Get.toNamed(AppRoutes.personalData);
                             if (mounted) await _loadCurrentUserData();
                           },
                           icon: const Icon(Icons.edit_outlined, size: 15),
                           label: const Text('Ubah Data Diri'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppTheme.primary,
-                            side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.35), width: 1.2),
-                            backgroundColor: AppTheme.primarySubtle.withValues(alpha: 0.4),
+                            side: BorderSide(
+                              color: AppTheme.primary.withValues(alpha: 0.35),
+                              width: 1.2,
+                            ),
+                            backgroundColor: AppTheme.primarySubtle.withValues(
+                              alpha: 0.4,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -1333,12 +1443,20 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                     ] else ...[
                       Row(
                         children: [
-                          const Icon(Icons.person, size: 16, color: AppTheme.textSecondary),
+                          const Icon(
+                            Icons.person,
+                            size: 16,
+                            color: AppTheme.textSecondary,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _currentUser?.namaLengkap ?? 'Pengguna',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textPrimary,
+                              ),
                             ),
                           ),
                         ],
@@ -1353,12 +1471,19 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.info_outline, color: Color(0xFF92400E), size: 18),
+                            Icon(
+                              Icons.info_outline,
+                              color: Color(0xFF92400E),
+                              size: 18,
+                            ),
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Data identitas (KTP, alamat, data fisik) wajib diisi untuk syarat SIMAKSI.',
-                                style: TextStyle(fontSize: 12, color: Color(0xFF78350F)),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF78350F),
+                                ),
                               ),
                             ),
                           ],
@@ -1369,7 +1494,7 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () async {
-                            await Navigator.pushNamed(context, AppRoutes.personalData);
+                            await Get.toNamed(AppRoutes.personalData);
                             if (mounted) await _loadCurrentUserData();
                           },
                           icon: const Icon(Icons.badge, size: 16),
@@ -1391,11 +1516,19 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    const Icon(Icons.group_add, color: AppTheme.secondary, size: 20),
+                    const Icon(
+                      Icons.group_add,
+                      color: AppTheme.secondary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Data Anggota Rombongan (${_memberControllers.length} Orang)',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
                   ],
                 ),
@@ -1420,9 +1553,14 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                  child: const Text('Lanjutkan ke Pembayaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: const Text(
+                    'Lanjutkan ke Pembayaran',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -1456,12 +1594,20 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                   color: AppTheme.primarySubtle,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.person_outline, color: AppTheme.primary, size: 18),
+                child: const Icon(
+                  Icons.person_outline,
+                  color: AppTheme.primary,
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
               Text(
                 title,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
               ),
             ],
           ),
@@ -1470,14 +1616,18 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
             controller: ctrl.namaCtrl,
             label: 'Nama Lengkap $title',
             prefixIcon: Icons.badge_outlined,
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Masukkan nama lengkap $title' : null,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'Masukkan nama lengkap $title'
+                : null,
           ),
           const SizedBox(height: 12),
           CustomTextField(
             controller: ctrl.alamatCtrl,
             label: 'Alamat Tempat Tinggal $title',
             prefixIcon: Icons.home_outlined,
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Masukkan alamat $title' : null,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'Masukkan alamat $title'
+                : null,
           ),
           const SizedBox(height: 12),
           CustomTextField(
@@ -1485,7 +1635,9 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
             label: 'Kontak Darurat / No. HP $title',
             prefixIcon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Masukkan kontak darurat $title' : null,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'Masukkan kontak darurat $title'
+                : null,
           ),
         ],
       ),
@@ -1539,7 +1691,9 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                   Icon(
                     icon,
                     size: 15,
-                    color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                    color: isSelected
+                        ? AppTheme.primary
+                        : AppTheme.textSecondary,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -1548,7 +1702,9 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                        color: isSelected
+                            ? AppTheme.primary
+                            : AppTheme.textSecondary,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1556,11 +1712,15 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.primary : AppTheme.primary.withValues(alpha: 0.12),
+                      color: isSelected
+                          ? AppTheme.primary
+                          : AppTheme.primary.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isSelected ? Icons.check_rounded : Icons.edit_calendar_rounded,
+                      isSelected
+                          ? Icons.check_rounded
+                          : Icons.edit_calendar_rounded,
                       size: 12,
                       color: isSelected ? Colors.white : AppTheme.primary,
                     ),
@@ -1572,7 +1732,11 @@ class _SimaksiFormScreenState extends State<SimaksiFormScreen> {
               if (!isSelected) ...[
                 const Row(
                   children: [
-                    Icon(Icons.calendar_month_outlined, size: 16, color: AppTheme.primary),
+                    Icon(
+                      Icons.calendar_month_outlined,
+                      size: 16,
+                      color: AppTheme.primary,
+                    ),
                     SizedBox(width: 6),
                     Text(
                       'Pilih Tanggal',

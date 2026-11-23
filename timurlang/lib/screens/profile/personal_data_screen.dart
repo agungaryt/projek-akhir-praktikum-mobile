@@ -6,11 +6,14 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+
 import '../../config/theme.dart';
 import '../../models/user_personal_data.dart';
 import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
-import '../../services/supabase_service.dart';
+
+import 'package:get/get.dart';
+
 import '../../utils/date_utils.dart';
 import '../../utils/image_helper.dart';
 import '../../widgets/custom_text_field.dart';
@@ -127,17 +130,7 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
     _surelCtrl.text = user.email;
 
     // Tarik data dari database lokal
-    var data = await DatabaseService.instance.getPersonalData(user.id);
-
-    // Coba tarik dari Supabase jika belum ada di lokal
-    if (data == null && SupabaseService.instance.isInitialized) {
-      try {
-        data = await SupabaseService.instance.getPersonalData(user.id);
-        if (data != null) {
-          await DatabaseService.instance.insertPersonalData(data);
-        }
-      } catch (_) {}
-    }
+    var data = await DatabaseService.instance.getPersonalDataByUserId(user.id);
 
     if (data != null && mounted) {
       _existingData = data;
@@ -152,8 +145,10 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
       _noTeleponCtrl.text = data.noTelepon;
       _noTeleponDaruratCtrl.text = data.noTeleponDarurat;
       _surelCtrl.text = data.surel;
-      if (data.beratBadan != null) _beratBadanCtrl.text = data.beratBadan!.toString();
-      if (data.tinggiBadan != null) _tinggiBadanCtrl.text = data.tinggiBadan!.toString();
+      if (data.beratBadan != null)
+        _beratBadanCtrl.text = data.beratBadan!.toString();
+      if (data.tinggiBadan != null)
+        _tinggiBadanCtrl.text = data.tinggiBadan!.toString();
       if (_provinsiList.contains(data.provinsi)) {
         _provinsi = data.provinsi;
       }
@@ -199,7 +194,10 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengambil foto: $e'), backgroundColor: AppTheme.dangerRed),
+          SnackBar(
+            content: Text('Gagal mengambil foto: $e'),
+            backgroundColor: AppTheme.dangerRed,
+          ),
         );
       }
     }
@@ -220,31 +218,53 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
             children: [
               const Text(
                 'Unggah Foto Dokumen Identitas (KTP / Paspor)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: AppTheme.primaryGreen),
-                title: const Text('Ambil Foto Kamera', style: TextStyle(color: AppTheme.textPrimary)),
+                leading: const Icon(
+                  Icons.camera_alt,
+                  color: AppTheme.primaryGreen,
+                ),
+                title: const Text(
+                  'Ambil Foto Kamera',
+                  style: TextStyle(color: AppTheme.textPrimary),
+                ),
                 onTap: () {
-                  Navigator.pop(ctx);
+                  Get.back();
                   _pickKtpImage(ImageSource.camera);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: AppTheme.skyBlue),
-                title: const Text('Pilih dari Galeri', style: TextStyle(color: AppTheme.textPrimary)),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: AppTheme.skyBlue,
+                ),
+                title: const Text(
+                  'Pilih dari Galeri',
+                  style: TextStyle(color: AppTheme.textPrimary),
+                ),
                 onTap: () {
-                  Navigator.pop(ctx);
+                  Get.back();
                   _pickKtpImage(ImageSource.gallery);
                 },
               ),
               if (_fileKtpUrl != null)
                 ListTile(
-                  leading: const Icon(Icons.delete_outline, color: AppTheme.dangerRed),
-                  title: const Text('Hapus Foto KTP', style: TextStyle(color: AppTheme.dangerRed)),
+                  leading: const Icon(
+                    Icons.delete_outline,
+                    color: AppTheme.dangerRed,
+                  ),
+                  title: const Text(
+                    'Hapus Foto KTP',
+                    style: TextStyle(color: AppTheme.dangerRed),
+                  ),
                   onTap: () {
-                    Navigator.pop(ctx);
+                    Get.back();
                     setState(() => _fileKtpUrl = null);
                   },
                 ),
@@ -273,7 +293,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Harap lengkapi semua kolom wajib bertanda bintang (*)'),
+          content: Text(
+            'Harap lengkapi semua kolom wajib bertanda bintang (*)',
+          ),
           backgroundColor: AppTheme.dangerRed,
         ),
       );
@@ -303,7 +325,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
       nomorKtp: _nomorKtpCtrl.text.trim(),
       fileKtpUrl: _fileKtpUrl,
       namaLengkap: _namaLengkapCtrl.text.trim(),
-      namaBelakang: _namaBelakangCtrl.text.trim().isEmpty ? null : _namaBelakangCtrl.text.trim(),
+      namaBelakang: _namaBelakangCtrl.text.trim().isEmpty
+          ? null
+          : _namaBelakangCtrl.text.trim(),
       tanggalLahir: _tanggalLahir!,
       jenisKelamin: _jenisKelamin,
       noTelepon: _noTeleponCtrl.text.trim(),
@@ -320,13 +344,7 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
     );
 
     // Simpan ke database lokal
-    await DatabaseService.instance.insertPersonalData(personalData);
-
-    // Sinkronkan ke Supabase jika online
-    bool syncedToSupabase = false;
-    if (SupabaseService.instance.isInitialized) {
-      syncedToSupabase = await SupabaseService.instance.syncPersonalData(personalData);
-    }
+    await DatabaseService.instance.savePersonalData(personalData);
 
     if (mounted) {
       setState(() {
@@ -334,29 +352,22 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
         _existingData = personalData;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            syncedToSupabase
-                ? 'Data diri berhasil disimpan ke Supabase & lokal! Syarat SIMAKSI terpenuhi ✓'
-                : 'Data diri berhasil disimpan di perangkat lokal! Syarat SIMAKSI terpenuhi ✓',
-          ),
-          backgroundColor: AppTheme.safeGreen,
-          duration: const Duration(seconds: 3),
-        ),
+      Get.snackbar(
+        'Berhasil Disimpan',
+        'Data diri berhasil disimpan di database lokal! Syarat SIMAKSI terpenuhi ✓',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.shade800,
+        colorText: Colors.white,
       );
 
-      // Kembali ke halaman sebelumnya dengan hasil true
-      Navigator.pop(context, true);
+      Get.back(result: true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Data Diri Pendaki'),
-      ),
+      appBar: AppBar(title: const Text('Data Diri Pendaki')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -371,11 +382,17 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                       decoration: BoxDecoration(
                         color: AppTheme.cardDark,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.35)),
+                        border: Border.all(
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.35),
+                        ),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.verified_user_outlined, color: AppTheme.primaryGreen, size: 28),
+                          Icon(
+                            Icons.verified_user_outlined,
+                            color: AppTheme.primaryGreen,
+                            size: 28,
+                          ),
                           SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -383,12 +400,19 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                               children: [
                                 Text(
                                   'Syarat Wajib SIMAKSI Digital',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: AppTheme.textPrimary,
+                                  ),
                                 ),
                                 SizedBox(height: 4),
                                 Text(
                                   'Data diri resmi sesuai kartu identitas diperlukan demi verifikasi keselamatan & asuransi pendakian.',
-                                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.textSecondary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -399,7 +423,10 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                     const SizedBox(height: 24),
 
                     // ── BAGIAN 1: DOKUMEN IDENTITAS ──
-                    _sectionHeader('1. Dokumen Identitas', Icons.badge_outlined),
+                    _sectionHeader(
+                      '1. Dokumen Identitas',
+                      Icons.badge_outlined,
+                    ),
                     const SizedBox(height: 12),
 
                     // Kewarganegaraan
@@ -426,14 +453,20 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                       label: 'Nomor Identitas / KTP / Paspor *',
                       prefixIcon: Icons.credit_card,
                       keyboardType: TextInputType.text,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Nomor identitas wajib diisi' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Nomor identitas wajib diisi'
+                          : null,
                     ),
                     const SizedBox(height: 14),
 
                     // Upload File Foto KTP
                     const Text(
                       'Unggah Foto / File KTP (Opsional)',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     GestureDetector(
@@ -444,7 +477,11 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _fileKtpUrl != null ? AppTheme.safeGreen : AppTheme.border),
+                          border: Border.all(
+                            color: _fileKtpUrl != null
+                                ? AppTheme.safeGreen
+                                : AppTheme.border,
+                          ),
                         ),
                         child: _fileKtpUrl != null
                             ? Stack(
@@ -452,7 +489,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
                                     child: Image(
-                                      image: ImageHelper.getImageProvider(_fileKtpUrl!)!,
+                                      image: ImageHelper.getImageProvider(
+                                        _fileKtpUrl!,
+                                      )!,
                                       width: double.infinity,
                                       height: 150,
                                       fit: BoxFit.cover,
@@ -462,17 +501,32 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                                     top: 8,
                                     right: 8,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: Colors.black.withValues(alpha: 0.7),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.7,
+                                        ),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: const Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.check_circle, size: 14, color: AppTheme.safeGreen),
+                                          Icon(
+                                            Icons.check_circle,
+                                            size: 14,
+                                            color: AppTheme.safeGreen,
+                                          ),
                                           SizedBox(width: 4),
-                                          Text('KTP Terunggah', style: TextStyle(fontSize: 10, color: Colors.white)),
+                                          Text(
+                                            'KTP Terunggah',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.white,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -482,11 +536,28 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.cloud_upload_outlined, size: 36, color: AppTheme.textSecondary),
+                                  const Icon(
+                                    Icons.cloud_upload_outlined,
+                                    size: 36,
+                                    color: AppTheme.textSecondary,
+                                  ),
                                   const SizedBox(height: 8),
-                                  const Text('Ketuk untuk unggah foto KTP', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                                  const Text(
+                                    'Ketuk untuk unggah foto KTP',
+                                    style: TextStyle(
+                                      color: AppTheme.textPrimary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                   const SizedBox(height: 4),
-                                  const Text('Kamera atau Galeri Foto', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                                  const Text(
+                                    'Kamera atau Galeri Foto',
+                                    style: TextStyle(
+                                      color: AppTheme.textSecondary,
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                 ],
                               ),
                       ),
@@ -501,7 +572,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                       controller: _namaLengkapCtrl,
                       label: 'Nama Depan / Nama Lengkap *',
                       prefixIcon: Icons.person,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama lengkap wajib diisi' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Nama lengkap wajib diisi'
+                          : null,
                     ),
                     const SizedBox(height: 14),
 
@@ -516,36 +589,61 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                     GestureDetector(
                       onTap: _pickTanggalLahir,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _tanggalLahir != null ? AppTheme.primaryGreen : AppTheme.border),
+                          border: Border.all(
+                            color: _tanggalLahir != null
+                                ? AppTheme.primaryGreen
+                                : AppTheme.border,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.cake_outlined, color: AppTheme.primaryGreen, size: 20),
+                            const Icon(
+                              Icons.cake_outlined,
+                              color: AppTheme.primaryGreen,
+                              size: 20,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Tanggal Lahir *', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                                  const Text(
+                                    'Tanggal Lahir *',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.textSecondary,
+                                    ),
+                                  ),
                                   const SizedBox(height: 2),
                                   Text(
                                     _tanggalLahir != null
-                                        ? AppDateUtils.formatDateIndonesian(_tanggalLahir!)
+                                        ? AppDateUtils.formatDateIndonesian(
+                                            _tanggalLahir!,
+                                          )
                                         : 'Pilih Tanggal Lahir',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: _tanggalLahir != null ? AppTheme.textPrimary : AppTheme.textSecondary,
+                                      color: _tanggalLahir != null
+                                          ? AppTheme.textPrimary
+                                          : AppTheme.textSecondary,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.calendar_today, size: 16, color: AppTheme.textSecondary),
+                            const Icon(
+                              Icons.calendar_today,
+                              size: 16,
+                              color: AppTheme.textSecondary,
+                            ),
                           ],
                         ),
                       ),
@@ -586,7 +684,10 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                     const SizedBox(height: 28),
 
                     // ── BAGIAN 3: KONTAK & DARURAT ──
-                    _sectionHeader('3. Kontak & Darurat', Icons.contact_phone_outlined),
+                    _sectionHeader(
+                      '3. Kontak & Darurat',
+                      Icons.contact_phone_outlined,
+                    ),
                     const SizedBox(height: 12),
 
                     CustomTextField(
@@ -594,7 +695,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                       label: 'Surel / Email *',
                       prefixIcon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Surel wajib diisi' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Surel wajib diisi'
+                          : null,
                     ),
                     const SizedBox(height: 14),
 
@@ -603,7 +706,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                       label: 'No. Telepon / WhatsApp Pendaki *',
                       prefixIcon: Icons.phone_android,
                       keyboardType: TextInputType.phone,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Nomor telepon wajib diisi' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Nomor telepon wajib diisi'
+                          : null,
                     ),
                     const SizedBox(height: 14),
 
@@ -612,12 +717,17 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                       label: 'No. Telepon Darurat (Keluarga / Kerabat) *',
                       prefixIcon: Icons.contact_emergency_outlined,
                       keyboardType: TextInputType.phone,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Nomor darurat wajib diisi' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Nomor darurat wajib diisi'
+                          : null,
                     ),
                     const SizedBox(height: 28),
 
                     // ── BAGIAN 4: ALAMAT DOMISILI (SESUAI KTP) ──
-                    _sectionHeader('4. Alamat (Sesuai KTP)', Icons.home_outlined),
+                    _sectionHeader(
+                      '4. Alamat (Sesuai KTP)',
+                      Icons.home_outlined,
+                    ),
                     const SizedBox(height: 12),
 
                     // Provinsi Dropdown
@@ -633,7 +743,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                       controller: _kotaKabupatenCtrl,
                       label: 'Kota / Kabupaten (Sesuai KTP) *',
                       prefixIcon: Icons.location_city,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Kota/Kabupaten wajib diisi' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Kota/Kabupaten wajib diisi'
+                          : null,
                     ),
                     const SizedBox(height: 14),
 
@@ -643,7 +755,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                           child: CustomTextField(
                             controller: _kecamatanCtrl,
                             label: 'Kecamatan *',
-                            validator: (v) => (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Wajib diisi'
+                                : null,
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -651,7 +765,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                           child: CustomTextField(
                             controller: _kelurahanCtrl,
                             label: 'Kelurahan *',
-                            validator: (v) => (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Wajib diisi'
+                                : null,
                           ),
                         ),
                       ],
@@ -663,7 +779,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                       label: 'Alamat Lengkap (Jalan, RT/RW, No. Rumah) *',
                       prefixIcon: Icons.map_outlined,
                       maxLines: 2,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Alamat lengkap wajib diisi' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Alamat lengkap wajib diisi'
+                          : null,
                     ),
                     const SizedBox(height: 36),
 
@@ -677,12 +795,18 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.check_circle_outline),
                         label: Text(
                           _isSaving ? 'Menyimpan Data...' : 'Simpan Data Diri',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -697,7 +821,11 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
   Widget _sectionHeader(String title, [IconData? icon]) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: AppTheme.textPrimary,
+      ),
     );
   }
 
@@ -710,7 +838,14 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
+          ),
+        ),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
@@ -727,7 +862,10 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
               items: items.map((item) {
                 return DropdownMenuItem<T>(
                   value: item,
-                  child: Text(item.toString(), style: const TextStyle(color: AppTheme.textPrimary)),
+                  child: Text(
+                    item.toString(),
+                    style: const TextStyle(color: AppTheme.textPrimary),
+                  ),
                 );
               }).toList(),
               onChanged: onChanged,

@@ -3,11 +3,11 @@
 // ============================================
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
 import '../../config/routes.dart';
 import '../../models/mountain.dart';
-import '../../models/basecamp_post.dart';
 import '../../services/database_service.dart';
 import '../../services/weather_service.dart';
 import '../../utils/image_helper.dart';
@@ -21,7 +21,7 @@ class MountainDetailScreen extends StatefulWidget {
 
 class _MountainDetailScreenState extends State<MountainDetailScreen> {
   Mountain? _mountain;
-  List<BasecampPost> _basecamps = [];
+  
   WeatherData? _weather;
   bool _loadingWeather = true;
 
@@ -30,7 +30,7 @@ class _MountainDetailScreenState extends State<MountainDetailScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments;
+    final args = Get.arguments ?? ModalRoute.of(context)?.settings.arguments;
     if (args is Mountain) {
       _mountain = args;
       _loadData();
@@ -61,14 +61,14 @@ class _MountainDetailScreenState extends State<MountainDetailScreen> {
 
   Future<void> _loadData() async {
     try {
-      final basecamps = await DatabaseService.instance.getBasecampsByMountain(_mountain!.id);
+      
       final weather = await WeatherService.instance.getCurrentWeather(
         _mountain!.koordinatLat,
         _mountain!.koordinatLong,
       );
       if (mounted) {
         setState(() {
-          _basecamps = basecamps;
+          
           _weather = weather;
           _loadingWeather = false;
         });
@@ -113,7 +113,7 @@ class _MountainDetailScreenState extends State<MountainDetailScreen> {
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
                   padding: EdgeInsets.zero,
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Get.back(),
                 ),
               ),
             ),
@@ -279,17 +279,17 @@ class _MountainDetailScreenState extends State<MountainDetailScreen> {
                           : const Text('Data cuaca tidak tersedia', style: TextStyle(color: AppTheme.textSecondary)),
                   const SizedBox(height: 20),
 
-                  // Basecamps
-                  const Text('Pos Pendakian & Basecamp Jalur', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  // Jalur Pendakian Card
+                  const Text('Informasi Jalur Pendakian', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
                   const SizedBox(height: 8),
-                  ..._basecamps.map((bc) => Container(
+                  Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: AppTheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: bc.isBuka ? AppTheme.border : AppTheme.error.withValues(alpha: 0.3),
+                        color: m.statusJalur != 'Tutup' ? AppTheme.border : AppTheme.error.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Column(
@@ -298,25 +298,25 @@ class _MountainDetailScreenState extends State<MountainDetailScreen> {
                         Row(
                           children: [
                             Icon(
-                              bc.isBuka ? Icons.house : Icons.cancel_outlined,
-                              color: bc.isBuka ? AppTheme.primary : AppTheme.error,
+                              m.statusJalur != 'Tutup' ? Icons.terrain : Icons.cancel_outlined,
+                              color: m.statusJalur != 'Tutup' ? AppTheme.primary : AppTheme.error,
                               size: 20,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: Text(bc.namaPos, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary)),
+                              child: Text('Jalur Resmi ${m.namaGunung}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary)),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: (bc.isBuka ? AppTheme.success : AppTheme.error).withValues(alpha: 0.15),
+                                color: (m.statusJalur != 'Tutup' ? AppTheme.success : AppTheme.error).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                bc.isBuka ? 'Jalur Buka' : 'Jalur Tutup',
+                                m.statusJalur != 'Tutup' ? 'Jalur Buka' : 'Jalur Tutup',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: bc.isBuka ? AppTheme.success : AppTheme.error,
+                                  color: m.statusJalur != 'Tutup' ? AppTheme.success : AppTheme.error,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -325,30 +325,23 @@ class _MountainDetailScreenState extends State<MountainDetailScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          bc.lokasiDeskripsi,
+                          'Pintu masuk & registrasi simaksi resmi untuk pendakian Gunung ${m.namaGunung}.',
                           style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(Icons.people_outline, size: 14, color: AppTheme.secondary),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Sisa Kuota: ${bc.sisaKuotaHariIni} / ${bc.kuotaHarian} orang',
-                              style: const TextStyle(fontSize: 11, color: AppTheme.secondary, fontWeight: FontWeight.w600),
-                            ),
-                            const Spacer(),
                             const Icon(Icons.payments_outlined, size: 14, color: AppTheme.primary),
                             const SizedBox(width: 4),
-                            Text(
-                              'Rp ${bc.hargaSimaksi.toInt()}/hr',
-                              style: const TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.bold),
+                            const Text(
+                              'Rp 25.000 / orang',
+                              style: TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
                       ],
                     ),
-                  )),
+                  ),
                   const SizedBox(height: 24),
 
                   // Book button
@@ -358,8 +351,7 @@ class _MountainDetailScreenState extends State<MountainDetailScreen> {
                     child: ElevatedButton.icon(
                       onPressed: m.statusJalur == 'Tutup'
                           ? null
-                          : () => Navigator.pushNamed(
-                                context,
+                          : () => Get.toNamed(
                                 AppRoutes.simaksiForm,
                                 arguments: m,
                               ),

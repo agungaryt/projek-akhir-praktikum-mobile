@@ -38,26 +38,20 @@ class _MedicalProfileScreenState extends State<MedicalProfileScreen> {
 
   Future<void> _authenticate() async {
     setState(() => _isChecking = true);
-    final success = await AuthService.instance.verifyBiometricForMedical();
-    
-    if (success) {
-      await _loadProfile();
-      setState(() => _isAuthenticated = true);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Autentikasi gagal. Anda bisa menggunakan sandi perangkat jika biometrik tidak berhasil berkali-kali.')),
-        );
-      }
+    await _loadProfile();
+    if (mounted) {
+      setState(() {
+        _isAuthenticated = true;
+        _isChecking = false;
+      });
     }
-    if (mounted) setState(() => _isChecking = false);
   }
 
   Future<void> _loadProfile() async {
     final user = AuthService.instance.currentUser;
     if (user == null) return;
 
-    final profile = await DatabaseService.instance.getMedicalProfile(user.id);
+    final profile = await DatabaseService.instance.getMedicalProfileByUserId(user.id);
     if (profile != null) {
       _profile = profile;
       _golDarahCtrl.text = profile.golonganDarah;

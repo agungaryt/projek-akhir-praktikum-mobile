@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
-
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:get/get.dart';
+
 import 'app.dart';
 import 'services/database_service.dart';
-import 'services/supabase_service.dart';
 import 'services/notification_service.dart';
-import 'services/sos_manager.dart';
+import 'controllers/auth_controller.dart';
+import 'controllers/mountain_controller.dart';
+import 'controllers/simaksi_controller.dart';
+import 'controllers/profile_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,27 +30,25 @@ void main() async {
     }
   }
 
-  // Pre-inisialisasi database lokal (SQLite)
+  // Pre-inisialisasi database lokal (SQLite - Modul VI)
   try {
     await DatabaseService.instance.database;
   } catch (e) {
-    debugPrint('⚠️ Error pre-inisialisasi SQLite: $e');
+    debugPrint('⚠️ Error inisialisasi SQLite: $e');
   }
 
-  // Inisialisasi Supabase (online database)
-  try {
-    await SupabaseService.instance.initialize();
-  } catch (e) {
-    debugPrint('⚠️ Error inisialisasi Supabase: $e');
-  }
-
-  // Inisialisasi Notifikasi & Siaga SOS Global
+  // Inisialisasi Notifikasi Lokal (Modul VII)
   try {
     await NotificationService.instance.initialize();
-    await SosManager.instance.initialize();
   } catch (e) {
-    debugPrint('⚠️ Error inisialisasi SOS Manager: $e');
+    debugPrint('⚠️ Error inisialisasi Notifikasi: $e');
   }
+
+  // Dependency Injection GetX (Modul VIII)
+  Get.put(AuthController(), permanent: true);
+  Get.put(MountainController(), permanent: true);
+  Get.put(SimaksiController(), permanent: true);
+  Get.put(ProfileController(), permanent: true);
 
   runApp(const MainApp());
 }

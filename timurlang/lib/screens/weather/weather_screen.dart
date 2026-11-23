@@ -4,10 +4,13 @@
 
 import 'dart:math' as math;
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../services/weather_service.dart';
 import '../../data/seed_data.dart';
 
@@ -18,7 +21,8 @@ class WeatherScreen extends StatefulWidget {
   State<WeatherScreen> createState() => _WeatherScreenState();
 }
 
-class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProviderStateMixin {
+class _WeatherScreenState extends State<WeatherScreen>
+    with SingleTickerProviderStateMixin {
   WeatherData? _currentWeather;
   List<WeatherForecast> _forecast = [];
   List<HourlyForecast> _hourlyForecast = [];
@@ -38,15 +42,55 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
 
   // Daftar gunung populer Indonesia untuk quick selector
   final List<Map<String, dynamic>> _popularMountains = [
-    {'name': 'Gunung Rinjani', 'query': 'Sembalun', 'lat': -8.4200, 'lon': 116.4580},
-    {'name': 'Gunung Semeru', 'query': 'Lumajang', 'lat': -8.1077, 'lon': 112.9224},
-    {'name': 'Gunung Merbabu', 'query': 'Selo', 'lat': -7.4550, 'lon': 110.4400},
-    {'name': 'Gunung Bromo', 'query': 'Probolinggo', 'lat': -7.9425, 'lon': 112.9530},
+    {
+      'name': 'Gunung Rinjani',
+      'query': 'Sembalun',
+      'lat': -8.4200,
+      'lon': 116.4580,
+    },
+    {
+      'name': 'Gunung Semeru',
+      'query': 'Lumajang',
+      'lat': -8.1077,
+      'lon': 112.9224,
+    },
+    {
+      'name': 'Gunung Merbabu',
+      'query': 'Selo',
+      'lat': -7.4550,
+      'lon': 110.4400,
+    },
+    {
+      'name': 'Gunung Bromo',
+      'query': 'Probolinggo',
+      'lat': -7.9425,
+      'lon': 112.9530,
+    },
     {'name': 'Gunung Prau', 'query': 'Dieng', 'lat': -7.1866, 'lon': 109.9190},
-    {'name': 'Gunung Gede', 'query': 'Cianjur', 'lat': -6.7844, 'lon': 106.9825},
-    {'name': 'Gunung Kerinci', 'query': 'Kerinci', 'lat': -1.6970, 'lon': 101.2640},
-    {'name': 'Gunung Slamet', 'query': 'Bambangan', 'lat': -7.2425, 'lon': 109.2080},
-    {'name': 'Gunung Lawu', 'query': 'Karanganyar', 'lat': -7.6258, 'lon': 111.1925},
+    {
+      'name': 'Gunung Gede',
+      'query': 'Cianjur',
+      'lat': -6.7844,
+      'lon': 106.9825,
+    },
+    {
+      'name': 'Gunung Kerinci',
+      'query': 'Kerinci',
+      'lat': -1.6970,
+      'lon': 101.2640,
+    },
+    {
+      'name': 'Gunung Slamet',
+      'query': 'Bambangan',
+      'lat': -7.2425,
+      'lon': 109.2080,
+    },
+    {
+      'name': 'Gunung Lawu',
+      'query': 'Karanganyar',
+      'lat': -7.6258,
+      'lon': 111.1925,
+    },
   ];
 
   // Daftar kota populer Indonesia untuk quick selector
@@ -94,11 +138,16 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
         'https://openweathermap.org/weathermap?basemap=map&cities=true&layer=precipitation&lat=$lat&lon=$lon&zoom=10',
       );
     } else {
-      url = Uri.parse('https://openweathermap.org/find?q=${Uri.encodeComponent(query)}');
+      url = Uri.parse(
+        'https://openweathermap.org/find?q=${Uri.encodeComponent(query)}',
+      );
     }
 
     try {
-      final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched) {
         await launchUrl(url, mode: LaunchMode.platformDefault);
       }
@@ -114,7 +163,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
     }
   }
 
-  Future<void> _loadWeather({String? cityName, double? lat, double? lon}) async {
+  Future<void> _loadWeather({
+    String? cityName,
+    double? lat,
+    double? lon,
+  }) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -136,18 +189,24 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
       String? displayName = cityName;
 
       // Jika lat/lon belum ada, cari apakah cityName cocok dengan gunung di SeedData
-      if ((finalLat == null || finalLon == null) && cityName != null && cityName.trim().isNotEmpty) {
+      if ((finalLat == null || finalLon == null) &&
+          cityName != null &&
+          cityName.trim().isNotEmpty) {
         final query = cityName.toLowerCase().trim();
-        final cleanQuery = query.replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '').trim();
+        final cleanQuery = query
+            .replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '')
+            .trim();
 
-        final match = SeedData.initialMountains.firstWhere(
-          (m) {
-            final mName = (m['nama_gunung'] as String).toLowerCase();
-            final cleanM = mName.replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '').trim();
-            return mName == query || cleanM == cleanQuery || mName.contains(cleanQuery) || cleanM.contains(cleanQuery);
-          },
-          orElse: () => {},
-        );
+        final match = SeedData.initialMountains.firstWhere((m) {
+          final mName = (m['nama_gunung'] as String).toLowerCase();
+          final cleanM = mName
+              .replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '')
+              .trim();
+          return mName == query ||
+              cleanM == cleanQuery ||
+              mName.contains(cleanQuery) ||
+              cleanM.contains(cleanQuery);
+        }, orElse: () => {});
 
         if (match.isNotEmpty) {
           finalLat = (match['koordinat_lat'] as num?)?.toDouble();
@@ -159,16 +218,31 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
       }
 
       if (finalLat != null && finalLon != null) {
-        current = await WeatherService.instance.getCurrentWeather(finalLat, finalLon);
-        forecast = await WeatherService.instance.getForecast(finalLat, finalLon);
-        hourly = await WeatherService.instance.getHourlyForecast(finalLat, finalLon);
+        current = await WeatherService.instance.getCurrentWeather(
+          finalLat,
+          finalLon,
+        );
+        forecast = await WeatherService.instance.getForecast(
+          finalLat,
+          finalLon,
+        );
+        hourly = await WeatherService.instance.getHourlyForecast(
+          finalLat,
+          finalLon,
+        );
         if (displayName != null) {
           current = current.copyWith(locationName: displayName);
         }
       } else if (_selectedCity != null) {
-        current = await WeatherService.instance.getWeatherByCity(_selectedCity!);
-        forecast = await WeatherService.instance.getForecastByCity(_selectedCity!);
-        hourly = await WeatherService.instance.getHourlyForecastByCity(_selectedCity!);
+        current = await WeatherService.instance.getWeatherByCity(
+          _selectedCity!,
+        );
+        forecast = await WeatherService.instance.getForecastByCity(
+          _selectedCity!,
+        );
+        hourly = await WeatherService.instance.getHourlyForecastByCity(
+          _selectedCity!,
+        );
       } else {
         current = await WeatherService.instance.getCurrentWeather(null, null);
         forecast = await WeatherService.instance.getForecast(null, null);
@@ -204,15 +278,23 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
         return StatefulBuilder(
           builder: (ctx, setModalState) {
             final query = _searchCtrl.text.trim().toLowerCase();
-            final cleanQuery = query.replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '').trim();
+            final cleanQuery = query
+                .replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '')
+                .trim();
 
             List<Map<String, dynamic>> matchingMountains = [];
             if (cleanQuery.isNotEmpty) {
-              matchingMountains = SeedData.initialMountains.where((m) {
-                final mName = (m['nama_gunung'] as String).toLowerCase();
-                final cleanM = mName.replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '').trim();
-                return mName.contains(cleanQuery) || cleanM.contains(cleanQuery);
-              }).take(6).toList();
+              matchingMountains = SeedData.initialMountains
+                  .where((m) {
+                    final mName = (m['nama_gunung'] as String).toLowerCase();
+                    final cleanM = mName
+                        .replaceAll(RegExp(r'^(gunung|gn\.)\s+'), '')
+                        .trim();
+                    return mName.contains(cleanQuery) ||
+                        cleanM.contains(cleanQuery);
+                  })
+                  .take(6)
+                  .toList();
             }
 
             return BackdropFilter(
@@ -264,8 +346,13 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                         onChanged: (_) => setModalState(() {}),
                         decoration: InputDecoration(
                           hintText: 'Cari kota atau gunung...',
-                          hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white38),
-                          prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                          hintStyle: GoogleFonts.plusJakartaSans(
+                            color: Colors.white38,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Colors.white70,
+                          ),
                           filled: true,
                           fillColor: Colors.white.withValues(alpha: 0.08),
                           border: OutlineInputBorder(
@@ -277,18 +364,25 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                             children: [
                               if (_searchCtrl.text.isNotEmpty)
                                 IconButton(
-                                  icon: const Icon(Icons.close_rounded, color: Colors.white54, size: 18),
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    color: Colors.white54,
+                                    size: 18,
+                                  ),
                                   onPressed: () {
                                     _searchCtrl.clear();
                                     setModalState(() {});
                                   },
                                 ),
                               IconButton(
-                                icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF38BDF8)),
+                                icon: const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: Color(0xFF38BDF8),
+                                ),
                                 onPressed: () {
                                   final text = _searchCtrl.text.trim();
                                   if (text.isNotEmpty) {
-                                    Navigator.pop(ctx);
+                                    Get.back();
                                     _loadWeather(cityName: text);
                                   }
                                 },
@@ -298,7 +392,7 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                         ),
                         onSubmitted: (val) {
                           if (val.trim().isNotEmpty) {
-                            Navigator.pop(ctx);
+                            Get.back();
                             _loadWeather(cityName: val.trim());
                           }
                         },
@@ -323,13 +417,16 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                           final lon = (m['koordinat_long'] as num?)?.toDouble();
                           return InkWell(
                             onTap: () {
-                              Navigator.pop(ctx);
+                              Get.back();
                               _loadWeather(cityName: name, lat: lat, lon: lon);
                             },
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
                               margin: const EdgeInsets.only(bottom: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.06),
                                 borderRadius: BorderRadius.circular(12),
@@ -337,7 +434,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.terrain_rounded, color: Color(0xFF38BDF8), size: 18),
+                                  const Icon(
+                                    Icons.terrain_rounded,
+                                    color: Color(0xFF38BDF8),
+                                    size: 18,
+                                  ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
@@ -369,15 +470,22 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                         InkWell(
                           onTap: () {
                             final text = _searchCtrl.text.trim();
-                            Navigator.pop(ctx);
+                            Get.back();
                             _loadWeather(cityName: text);
                           },
                           borderRadius: BorderRadius.circular(10),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 4,
+                            ),
                             child: Row(
                               children: [
-                                const Icon(Icons.location_city_rounded, color: Colors.white70, size: 16),
+                                const Icon(
+                                  Icons.location_city_rounded,
+                                  color: Colors.white70,
+                                  size: 16,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -389,7 +497,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                                     ),
                                   ),
                                 ),
-                                const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 12),
+                                const Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  color: Colors.white38,
+                                  size: 12,
+                                ),
                               ],
                             ),
                           ),
@@ -400,7 +512,7 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                       // Tombol GPS Saya
                       InkWell(
                         onTap: () {
-                          Navigator.pop(ctx);
+                          Get.back();
                           setState(() {
                             _selectedCity = null;
                             _selectedLat = null;
@@ -411,15 +523,26 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                         },
                         borderRadius: BorderRadius.circular(14),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0284C7).withValues(alpha: 0.2),
+                            color: const Color(0xFF0284C7)
+                                .withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: const Color(0xFF38BDF8)
+                                  .withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.my_location_rounded, color: Color(0xFF38BDF8), size: 20),
+                              const Icon(
+                                Icons.my_location_rounded,
+                                color: Color(0xFF38BDF8),
+                                size: 20,
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
@@ -443,7 +566,10 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: Colors.white38,
+                              ),
                             ],
                           ),
                         ),
@@ -465,7 +591,7 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                         children: _popularMountains.map((m) {
                           return InkWell(
                             onTap: () {
-                              Navigator.pop(ctx);
+                              Get.back();
                               _loadWeather(
                                 cityName: m['name'] as String,
                                 lat: m['lat'] as double?,
@@ -474,7 +600,10 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                             },
                             borderRadius: BorderRadius.circular(20),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(20),
@@ -483,7 +612,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.landscape_rounded, size: 14, color: Color(0xFF38BDF8)),
+                                  const Icon(
+                                    Icons.landscape_rounded,
+                                    size: 14,
+                                    color: Color(0xFF38BDF8),
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     m['name'] as String,
@@ -516,12 +649,15 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                         children: _popularCities.map((city) {
                           return InkWell(
                             onTap: () {
-                              Navigator.pop(ctx);
+                              Get.back();
                               _loadWeather(cityName: city);
                             },
                             borderRadius: BorderRadius.circular(20),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(20),
@@ -530,7 +666,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.location_city_rounded, size: 14, color: Color(0xFF38BDF8)),
+                                  const Icon(
+                                    Icons.location_city_rounded,
+                                    size: 14,
+                                    color: Color(0xFF38BDF8),
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     city,
@@ -564,9 +704,7 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
       body: Stack(
         children: [
           // 1. Clean Atmospheric Background (Gradien dinamis menyesuaikan cuaca & waktu)
-          Positioned.fill(
-            child: _buildCleanAtmosphereBackground(),
-          ),
+          Positioned.fill(child: _buildCleanAtmosphereBackground()),
 
           // 2. Weather Illustration Background (Mepet atas saja, lebarnya dan tingginya sesuai gambar asli)
           Positioned(
@@ -581,18 +719,14 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                   key: ValueKey(_getWeatherBackgroundImage()),
                   fit: BoxFit.fitWidth,
                   alignment: Alignment.topCenter,
-                  errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                  errorBuilder: (context, error, stackTrace) =>
+                      const SizedBox.shrink(),
                 ),
               ),
             ),
           ),
 
-          Positioned.fill(
-            child: SafeArea(
-              bottom: false,
-              child: _buildBody(),
-            ),
-          ),
+          Positioned.fill(child: SafeArea(bottom: false, child: _buildBody())),
         ],
       ),
     );
@@ -606,14 +740,19 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
     final now = DateTime.now();
     final hour = now.hour;
     final nowEpoch = now.millisecondsSinceEpoch ~/ 1000;
-    final isNight = (_currentWeather != null && _currentWeather!.sunrise > 0 && _currentWeather!.sunset > 0)
-        ? (nowEpoch < _currentWeather!.sunrise || nowEpoch >= _currentWeather!.sunset)
+    final isNight =
+        (_currentWeather != null &&
+            _currentWeather!.sunrise > 0 &&
+            _currentWeather!.sunset > 0)
+        ? (nowEpoch < _currentWeather!.sunrise ||
+              nowEpoch >= _currentWeather!.sunset)
         : (hour < 6 || hour >= 18);
 
     final condition = _currentWeather?.condition.toLowerCase() ?? '';
     final description = _currentWeather?.description.toLowerCase() ?? '';
 
-    final isRain = condition.contains('hujan') ||
+    final isRain =
+        condition.contains('hujan') ||
         condition.contains('gerimis') ||
         condition.contains('badai') ||
         condition.contains('petir') ||
@@ -630,7 +769,8 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
       return 'assets/images/weather_hujan.png';
     }
 
-    final isClouds = condition.contains('awan') ||
+    final isClouds =
+        condition.contains('awan') ||
         condition.contains('mendung') ||
         condition.contains('kabut') ||
         condition.contains('cloud') ||
@@ -645,7 +785,9 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
       return 'assets/images/weather_berawan.png';
     }
 
-    if (isNight || condition.contains('malam') || description.contains('malam')) {
+    if (isNight ||
+        condition.contains('malam') ||
+        description.contains('malam')) {
       return 'assets/images/weather_malam.png';
     }
 
@@ -661,14 +803,19 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
 
     final isMorning = timeInMinutes >= 300 && timeInMinutes < 510;
     final isDusk = timeInMinutes >= 930 && timeInMinutes < 1095;
-    final isNight = (_currentWeather != null && _currentWeather!.sunrise > 0 && _currentWeather!.sunset > 0)
-        ? (nowEpoch < _currentWeather!.sunrise || nowEpoch >= _currentWeather!.sunset)
+    final isNight =
+        (_currentWeather != null &&
+            _currentWeather!.sunrise > 0 &&
+            _currentWeather!.sunset > 0)
+        ? (nowEpoch < _currentWeather!.sunrise ||
+              nowEpoch >= _currentWeather!.sunset)
         : (timeInMinutes >= 1095 || timeInMinutes < 300);
 
     final condition = _currentWeather?.condition.toLowerCase() ?? '';
     final description = _currentWeather?.description.toLowerCase() ?? '';
 
-    final isRain = condition.contains('hujan') ||
+    final isRain =
+        condition.contains('hujan') ||
         condition.contains('gerimis') ||
         condition.contains('badai') ||
         condition.contains('petir') ||
@@ -681,7 +828,8 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
         (_currentWeather?.isStormWarning ?? false) ||
         ((_currentWeather?.rain1h ?? 0) > 0);
 
-    final isClouds = condition.contains('awan') ||
+    final isClouds =
+        condition.contains('awan') ||
         condition.contains('mendung') ||
         condition.contains('kabut') ||
         condition.contains('cloud') ||
@@ -694,88 +842,42 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
 
     if (isRain) {
       if (isDusk) {
-        return const [
-          Color(0xFF2E273D),
-          Color(0xFF1B1626),
-          Color(0xFF0C0914),
-        ];
+        return const [Color(0xFF2E273D), Color(0xFF1B1626), Color(0xFF0C0914)];
       } else if (isNight) {
-        return const [
-          Color(0xFF111927),
-          Color(0xFF0A0F1A),
-          Color(0xFF02050A),
-        ];
+        return const [Color(0xFF111927), Color(0xFF0A0F1A), Color(0xFF02050A)];
       } else {
-        return const [
-          Color(0xFF263545),
-          Color(0xFF142130),
-          Color(0xFF0A121C),
-        ];
+        return const [Color(0xFF263545), Color(0xFF142130), Color(0xFF0A121C)];
       }
     }
 
     if (isClouds) {
       if (isMorning) {
-        return const [
-          Color(0xFF3B5066),
-          Color(0xFF233242),
-          Color(0xFF101B26),
-        ];
+        return const [Color(0xFF3B5066), Color(0xFF233242), Color(0xFF101B26)];
       } else if (isDusk) {
-        return const [
-          Color(0xFF382E47),
-          Color(0xFF221A30),
-          Color(0xFF0F0B18),
-        ];
+        return const [Color(0xFF382E47), Color(0xFF221A30), Color(0xFF0F0B18)];
       } else if (isNight) {
-        return const [
-          Color(0xFF141C2B),
-          Color(0xFF0A0F1A),
-          Color(0xFF03050B),
-        ];
+        return const [Color(0xFF141C2B), Color(0xFF0A0F1A), Color(0xFF03050B)];
       } else {
-        return const [
-          Color(0xFF2B3D52),
-          Color(0xFF1B2836),
-          Color(0xFF0D1620),
-        ];
+        return const [Color(0xFF2B3D52), Color(0xFF1B2836), Color(0xFF0D1620)];
       }
     }
 
-    if (isNight || condition.contains('malam') || description.contains('malam')) {
+    if (isNight ||
+        condition.contains('malam') ||
+        description.contains('malam')) {
       if (hour >= 22 || hour < 5) {
-        return const [
-          Color(0xFF080D1A),
-          Color(0xFF040710),
-          Color(0xFF010206),
-        ];
+        return const [Color(0xFF080D1A), Color(0xFF040710), Color(0xFF010206)];
       } else {
-        return const [
-          Color(0xFF0F172A),
-          Color(0xFF090E1F),
-          Color(0xFF03050B),
-        ];
+        return const [Color(0xFF0F172A), Color(0xFF090E1F), Color(0xFF03050B)];
       }
     }
 
     if (isMorning) {
-      return const [
-        Color(0xFF0284C7),
-        Color(0xFF0369A1),
-        Color(0xFF082F49),
-      ];
+      return const [Color(0xFF0284C7), Color(0xFF0369A1), Color(0xFF082F49)];
     } else if (isDusk) {
-      return const [
-        Color(0xFFB45309),
-        Color(0xFF6B21A8),
-        Color(0xFF181024),
-      ];
+      return const [Color(0xFFB45309), Color(0xFF6B21A8), Color(0xFF181024)];
     } else {
-      return const [
-        Color(0xFF0284C7),
-        Color(0xFF0369A1),
-        Color(0xFF0B3B60),
-      ];
+      return const [Color(0xFF0284C7), Color(0xFF0369A1), Color(0xFF0B3B60)];
     }
   }
 
@@ -819,7 +921,10 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircularProgressIndicator(color: Color(0xFF38BDF8), strokeWidth: 3),
+                  const CircularProgressIndicator(
+                    color: Color(0xFF38BDF8),
+                    strokeWidth: 3,
+                  ),
                   const SizedBox(height: 18),
                   Text(
                     'Sinkronisasi Satelit OpenWeather...',
@@ -859,12 +964,19 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.cloud_off_rounded, size: 56, color: Colors.white70),
+                const Icon(
+                  Icons.cloud_off_rounded,
+                  size: 56,
+                  color: Colors.white70,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   _errorMessage!,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
@@ -873,7 +985,10 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black87,
                     shape: const StadiumBorder(),
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 12,
+                    ),
                   ),
                   icon: const Icon(Icons.refresh_rounded),
                   label: const Text('Coba Lagi'),
@@ -894,7 +1009,9 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
         color: Colors.white,
         backgroundColor: const Color(0xFF1E293B),
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -957,12 +1074,20 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 22),
-            onPressed: () => Navigator.pop(context),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+            onPressed: () => Get.back(),
             tooltip: 'Kembali',
           ),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
             tooltip: 'Perbarui Data Cuaca',
             onPressed: () => _loadWeather(),
           ),
@@ -981,7 +1106,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.location_on_outlined, color: Colors.white, size: 24),
+            const Icon(
+              Icons.location_on_outlined,
+              color: Colors.white,
+              size: 24,
+            ),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
@@ -1004,7 +1133,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
               ),
             ),
             const SizedBox(width: 6),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white70, size: 22),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.white70,
+              size: 22,
+            ),
           ],
         ),
       ),
@@ -1120,7 +1253,10 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                 ? Center(
                     child: Text(
                       'Prakiraan jam sedang disinkronkan...',
-                      style: GoogleFonts.plusJakartaSans(color: Colors.white70, fontSize: 13),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
                     ),
                   )
                 : _buildHourlyChartList(),
@@ -1130,7 +1266,9 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
 
           InkWell(
             onTap: () => _openOpenWeatherWeb(is15Days: false),
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(24),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               child: Row(
@@ -1145,7 +1283,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right_rounded, color: Colors.white70, size: 16),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.white70,
+                    size: 16,
+                  ),
                 ],
               ),
             ),
@@ -1166,8 +1308,12 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
         final timeStr = DateFormat('HH.00').format(item.time);
         final popPercent = (item.pop * 100).round();
 
-        final prevTemp = i > 0 ? _hourlyForecast[i - 1].temperature : item.temperature;
-        final nextTemp = i < _hourlyForecast.length - 1 ? _hourlyForecast[i + 1].temperature : item.temperature;
+        final prevTemp = i > 0
+            ? _hourlyForecast[i - 1].temperature
+            : item.temperature;
+        final nextTemp = i < _hourlyForecast.length - 1
+            ? _hourlyForecast[i + 1].temperature
+            : item.temperature;
 
         return SizedBox(
           width: 58,
@@ -1182,10 +1328,7 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              Text(
-                item.icon,
-                style: const TextStyle(fontSize: 20),
-              ),
+              Text(item.icon, style: const TextStyle(fontSize: 20)),
               Text(
                 '${item.temperature.round()}°',
                 style: GoogleFonts.plusJakartaSans(
@@ -1208,7 +1351,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.water_drop_rounded, size: 10, color: Color(0xFF67E8F9)),
+                  const Icon(
+                    Icons.water_drop_rounded,
+                    size: 10,
+                    color: Color(0xFF67E8F9),
+                  ),
                   const SizedBox(width: 2),
                   Text(
                     '$popPercent%',
@@ -1234,13 +1381,15 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
 
     final firstRain = _hourlyForecast.firstWhere(
       (h) => h.pop > 0.25,
-      orElse: () => _hourlyForecast.isNotEmpty ? _hourlyForecast.first : HourlyForecast(
-        time: now.add(const Duration(hours: 3)),
-        temperature: weather.temperature,
-        condition: weather.condition,
-        icon: weather.icon,
-        pop: 0.42,
-      ),
+      orElse: () => _hourlyForecast.isNotEmpty
+          ? _hourlyForecast.first
+          : HourlyForecast(
+              time: now.add(const Duration(hours: 3)),
+              temperature: weather.temperature,
+              condition: weather.condition,
+              icon: weather.icon,
+              pop: 0.42,
+            ),
     );
     final rainDayName = DateFormat('EEEE', 'id_ID').format(firstRain.time);
     final rainPopPercent = (firstRain.pop * 100).round();
@@ -1248,13 +1397,21 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
         ? 'Mungkin turun hujan pada $rainDayName ${DateFormat('HH.mm').format(firstRain.time)} ($rainPopPercent%)'
         : 'Peluang hujan rendah ($rainPopPercent%). Kondisi langit relatif aman.';
 
-    final tomorrowMax = _forecast.isNotEmpty ? _forecast.first.tempMax.round() : (weather.tempMax + 1).round();
-    final tomorrowHumidity = _forecast.isNotEmpty ? _forecast.first.humidity.round() : weather.humidity.round();
+    final tomorrowMax = _forecast.isNotEmpty
+        ? _forecast.first.tempMax.round()
+        : (weather.tempMax + 1).round();
+    final tomorrowHumidity = _forecast.isNotEmpty
+        ? _forecast.first.humidity.round()
+        : weather.humidity.round();
     final feelsLikeTomorrow = tomorrowMax + (tomorrowHumidity > 70 ? 3 : 1);
-    final feelsLikeText = 'Kelembapan $tomorrowHumidity% membuat suhu tinggi terasa spt $feelsLikeTomorrow°C';
+    final feelsLikeText =
+        'Kelembapan $tomorrowHumidity% membuat suhu tinggi terasa spt $feelsLikeTomorrow°C';
 
-    final tomorrowCond = _forecast.isNotEmpty ? _forecast.first.condition : 'Kemungkinan Hujan Curah';
-    final forecastCardText = '$tomorrowCond besok. Tinggi $tomorrowMax derajat celcius';
+    final tomorrowCond = _forecast.isNotEmpty
+        ? _forecast.first.condition
+        : 'Kemungkinan Hujan Curah';
+    final forecastCardText =
+        '$tomorrowCond besok. Tinggi $tomorrowMax derajat celcius';
 
     DateTime sunriseTime;
     DateTime sunsetTime;
@@ -1269,7 +1426,9 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
     final sunTimeFormat = isAfterSunset
         ? DateFormat('HH.mm').format(sunriseTime)
         : DateFormat('HH.mm').format(sunsetTime);
-    final sunTitle = isAfterSunset ? 'Matahari Telah Terbenam' : 'Jangan Lewatkan Matahari';
+    final sunTitle = isAfterSunset
+        ? 'Matahari Telah Terbenam'
+        : 'Jangan Lewatkan Matahari';
     final sunText = isAfterSunset
         ? 'Matahari akan terbit esok pukul $sunTimeFormat'
         : 'Matahari akan terbenam pukul $sunTimeFormat';
@@ -1504,7 +1663,9 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                           style: GoogleFonts.plusJakartaSans(
                             color: isPast ? Colors.white60 : Colors.white,
                             fontSize: 14,
-                            fontWeight: isPast ? FontWeight.w400 : FontWeight.w600,
+                            fontWeight: isPast
+                                ? FontWeight.w400
+                                : FontWeight.w600,
                           ),
                         ),
                       ),
@@ -1513,7 +1674,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                         child: !isPast && popPercent > 0
                             ? Row(
                                 children: [
-                                  const Icon(Icons.water_drop_rounded, size: 12, color: Color(0xFF67E8F9)),
+                                  const Icon(
+                                    Icons.water_drop_rounded,
+                                    size: 12,
+                                    color: Color(0xFF67E8F9),
+                                  ),
                                   const SizedBox(width: 3),
                                   Text(
                                     '$popPercent%',
@@ -1529,10 +1694,17 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                       ),
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: icons.map((ic) => Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Text(ic.toString(), style: const TextStyle(fontSize: 16)),
-                        )).toList(),
+                        children: icons
+                            .map(
+                              (ic) => Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: Text(
+                                  ic.toString(),
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            )
+                            .toList(),
                       ),
                       const Spacer(),
                       Text(
@@ -1555,7 +1727,9 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
 
           InkWell(
             onTap: () => _openOpenWeatherWeb(is15Days: true),
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(24),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               child: Row(
@@ -1570,7 +1744,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right_rounded, color: Colors.white70, size: 16),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.white70,
+                    size: 16,
+                  ),
                 ],
               ),
             ),
@@ -1584,17 +1762,20 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
   /// Card Status Keamanan Pendakian (Identik dengan foto referensi versi Pendakian)
   Widget _buildHikingSafetyCard(WeatherData weather) {
     final condition = weather.condition.toLowerCase();
-    final isStormOrRain = weather.isStormWarning ||
+    final isStormOrRain =
+        weather.isStormWarning ||
         condition.contains('hujan') ||
         condition.contains('badai') ||
         weather.windSpeed > 30;
 
-    final statusText = isStormOrRain ? 'Buruk' : (weather.windSpeed > 22 ? 'Waspada' : 'Baik');
+    final statusText = isStormOrRain
+        ? 'Buruk'
+        : (weather.windSpeed > 22 ? 'Waspada' : 'Baik');
     final descText = isStormOrRain
         ? 'Cuaca Buruk untuk mendaki sekarang'
         : (weather.windSpeed > 22
-            ? 'Cuaca Berangin untuk mendaki sekarang'
-            : 'Cuaca Baik untuk mendaki sekarang');
+              ? 'Cuaca Berangin untuk mendaki sekarang'
+              : 'Cuaca Baik untuk mendaki sekarang');
 
     final nowHour = DateTime.now().hour;
 
@@ -1660,8 +1841,11 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: List.generate(3, (i) {
                     final targetHour = (nowHour + i + 1) % 24;
-                    final hourStr = '${targetHour.toString().padLeft(2, '0')}.00';
-                    final slotIsBad = isStormOrRain || (i == 1 && condition.contains('gerimis'));
+                    final hourStr =
+                        '${targetHour.toString().padLeft(2, '0')}.00';
+                    final slotIsBad =
+                        isStormOrRain ||
+                        (i == 1 && condition.contains('gerimis'));
 
                     return Column(
                       children: [
@@ -1682,7 +1866,9 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                           height: 32,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: slotIsBad ? const Color(0xFFEA580C) : const Color(0xFF10B981),
+                            color: slotIsBad
+                                ? const Color(0xFFEA580C)
+                                : const Color(0xFF10B981),
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.35),
                               width: 1.2,
@@ -1794,7 +1980,10 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
               children: [
                 Text(
                   label,
-                  style: GoogleFonts.plusJakartaSans(color: Colors.white60, fontSize: 11),
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white60,
+                    fontSize: 11,
+                  ),
                 ),
                 Text(
                   value,
@@ -1827,7 +2016,10 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1,
+            ),
           ),
           child: child,
         ),
@@ -1835,7 +2027,6 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
     );
   }
 }
-
 
 /// CustomPainter untuk segmen kurva temperatur per jam
 class _HourlyCurveSegmentPainter extends CustomPainter {
@@ -1872,7 +2063,12 @@ class _HourlyCurveSegmentPainter extends CustomPainter {
     final path = Path()
       ..moveTo(0, (yPrev + yCurr) / 2)
       ..quadraticBezierTo(size.width * 0.25, yCurr, size.width * 0.5, yCurr)
-      ..quadraticBezierTo(size.width * 0.75, yCurr, size.width, (yCurr + yNext) / 2);
+      ..quadraticBezierTo(
+        size.width * 0.75,
+        yCurr,
+        size.width,
+        (yCurr + yNext) / 2,
+      );
 
     canvas.drawPath(path, linePaint);
 
@@ -1884,11 +2080,7 @@ class _HourlyCurveSegmentPainter extends CustomPainter {
       Paint()..color = Colors.white.withValues(alpha: 0.3),
     );
 
-    canvas.drawCircle(
-      dotCenter,
-      2.5,
-      Paint()..color = Colors.white,
-    );
+    canvas.drawCircle(dotCenter, 2.5, Paint()..color = Colors.white);
   }
 
   @override
@@ -1935,11 +2127,7 @@ class _SunArcPainter extends CustomPainter {
       Paint()..color = const Color(0xFFFDE047).withValues(alpha: 0.35),
     );
 
-    canvas.drawCircle(
-      sunPos,
-      3.5,
-      Paint()..color = const Color(0xFFFEF08A),
-    );
+    canvas.drawCircle(sunPos, 3.5, Paint()..color = const Color(0xFFFEF08A));
   }
 
   @override

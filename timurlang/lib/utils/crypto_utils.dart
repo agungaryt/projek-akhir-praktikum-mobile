@@ -7,6 +7,12 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 class CryptoUtils {
+  /// Simple SHA-256 hash of a string
+  static String sha256Hash(String input) {
+    final bytes = utf8.encode(input);
+    return sha256.convert(bytes).toString();
+  }
+
   /// Hash a password with salt using SHA-256
   static String hashPassword(String password, String salt) {
     final bytes = utf8.encode('$salt:$password');

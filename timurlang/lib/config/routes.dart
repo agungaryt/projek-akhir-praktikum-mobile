@@ -12,18 +12,10 @@ class AppRoutes {
   static const String simaksiForm = '/simaksi-form';
   static const String simaksiTicket = '/simaksi-ticket';
   static const String simaksiPayment = '/simaksi-payment';
-  static const String basecampDashboard = '/basecamp';
-  static const String ticketVerify = '/ticket-verify';
-  static const String hikerMonitor = '/hiker-monitor';
   static const String map = '/map';
   static const String weather = '/weather';
   static const String compass = '/compass';
-  static const String fallDetection = '/fall-detection';
-  static const String sos = '/sos';
-  static const String survivalAssistant = '/survival-assistant';
   static const String profile = '/profile';
   static const String personalData = '/personal-data';
   static const String medicalProfile = '/medical-profile';
-  static const String courseFeedback = '/course-feedback';
-  static const String mountainClimber = '/mountain-climber';
 }

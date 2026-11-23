@@ -13,13 +13,13 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 import '../../config/theme.dart';
 import '../../config/routes.dart';
 import '../../models/mountain.dart';
-import '../../models/basecamp_post.dart';
 import '../../services/database_service.dart';
 import '../../services/trail_service.dart';
 
@@ -41,7 +41,7 @@ class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
 
   List<Mountain> _mountains = [];
-  List<BasecampPost> _allBasecamps = [];
+  
   Mountain? _selectedMountain;
   HikingTrail? _highlightedTrail;
   bool _isLoading = true;
@@ -84,12 +84,12 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _loadData() async {
     try {
       final mountains = await DatabaseService.instance.getAllMountains();
-      final basecamps = await DatabaseService.instance.getAllBasecampPosts();
+      
 
       if (mounted) {
         setState(() {
           _mountains = mountains;
-          _allBasecamps = basecamps;
+          
           _isLoading = false;
         });
 
@@ -118,7 +118,7 @@ class _MapScreenState extends State<MapScreen> {
 
   List<HikingTrail> get _activeTrails {
     if (_selectedMountain == null) return [];
-    return TrailService.instance.getTrailsForMountain(_selectedMountain!, _allBasecamps);
+    return TrailService.instance.getTrailsForMountain(_selectedMountain!);
   }
 
   void _showLayerSelector() {
@@ -182,7 +182,7 @@ class _MapScreenState extends State<MapScreen> {
                         : null,
                     onTap: () {
                       setState(() => _selectedLayer = type);
-                      Navigator.pop(ctx);
+                      Get.back();
                     },
                   );
                 }),
@@ -195,7 +195,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _showMountainDetails(Mountain mountain) {
-    final trails = TrailService.instance.getTrailsForMountain(mountain, _allBasecamps);
+    final trails = TrailService.instance.getTrailsForMountain(mountain);
 
     showModalBottomSheet(
       context: context,
@@ -281,7 +281,7 @@ class _MapScreenState extends State<MapScreen> {
                         height: 48,
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            Navigator.pop(ctx);
+                            Get.back();
                             _focusMountain(mountain);
                           },
                           style: OutlinedButton.styleFrom(
@@ -313,9 +313,8 @@ class _MapScreenState extends State<MapScreen> {
                         height: 48,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.pop(ctx);
-                            Navigator.pushNamed(
-                              context,
+                            Get.back();
+                            Get.toNamed(
                               AppRoutes.mountainDetail,
                               arguments: mountain,
                             );
@@ -491,7 +490,7 @@ class _MapScreenState extends State<MapScreen> {
                         Expanded(
                           child: _metricItem(
                             Icons.confirmation_number_outlined,
-                            'Rp ${trail.basecampPost.hargaSimaksi.toInt()}',
+                            'Rp ${trail.hargaSimaksi.toInt()}',
                             'Tarif SIMAKSI',
                           ),
                         ),
@@ -500,7 +499,7 @@ class _MapScreenState extends State<MapScreen> {
                   ),
 
                   // Lokasi Deskripsi
-                  if (trail.basecampPost.lokasiDeskripsi.isNotEmpty) ...[
+                  if (trail.lokasiDeskripsi.isNotEmpty) ...[
                     const SizedBox(height: 14),
                     Container(
                       width: double.infinity,
@@ -517,7 +516,7 @@ class _MapScreenState extends State<MapScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              trail.basecampPost.lokasiDeskripsi,
+                              trail.lokasiDeskripsi,
                               style: GoogleFonts.plusJakartaSans(
                                 color: AppTheme.textSecondary,
                                 fontSize: 12,
@@ -560,15 +559,14 @@ class _MapScreenState extends State<MapScreen> {
                     child: ElevatedButton.icon(
                       onPressed: isBuka
                           ? () {
-                              Navigator.pop(ctx);
-                              Navigator.pushNamed(
-                                context,
+                              Get.back();
+                              Get.toNamed(
                                 AppRoutes.simaksiForm,
                                 arguments: {
                                   'mountain': _selectedMountain,
                                   'mountainId': _selectedMountain?.id,
                                   'basecampId': trail.basecampId,
-                                  'basecamp': trail.basecampPost,
+                                  
                                   'basecampName': trail.basecampName,
                                 },
                               );
@@ -979,7 +977,7 @@ class _MapScreenState extends State<MapScreen> {
                 itemBuilder: (context, index) {
                   final m = _mountains[index];
                   final isSelected = _selectedMountain?.id == m.id;
-                  final bcCount = _allBasecamps.where((b) => b.gunungId == m.id).length;
+                  final bcCount = 1;
 
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),

@@ -10,7 +10,9 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
 import '../../config/theme.dart';
 import '../../services/midtrans_service.dart';
 
@@ -88,7 +90,9 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
     if (_isCheckingStatus) return;
     setState(() => _isCheckingStatus = true);
 
-    final result = await MidtransService.instance.checkTransactionStatus(widget.orderId);
+    final result = await MidtransService.instance.checkTransactionStatus(
+      widget.orderId,
+    );
 
     if (!mounted) return;
     setState(() => _isCheckingStatus = false);
@@ -101,7 +105,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
           duration: Duration(seconds: 2),
         ),
       );
-      Navigator.pop(context, true);
+      Get.back(result: true);
     } else {
       if (!silent) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -130,11 +134,14 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Tetap di Sini', style: TextStyle(color: AppTheme.primaryGreen)),
+            onPressed: () => Get.back(result: false),
+            child: const Text(
+              'Tetap di Sini',
+              style: TextStyle(color: AppTheme.primaryGreen),
+            ),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () => Get.back(result: true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.dangerRed,
               foregroundColor: Colors.white,
@@ -156,7 +163,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
         if (didPop) return;
         final shouldLeave = await _onWillPop();
         if (shouldLeave && context.mounted) {
-          Navigator.pop(context, false);
+          Get.back(result: false);
         }
       },
       child: Scaffold(
@@ -164,7 +171,10 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Pembayaran Midtrans', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text(
+                'Pembayaran Midtrans',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               Text(
                 'Order ID: ${widget.orderId}',
                 style: const TextStyle(fontSize: 11, color: Colors.white60),
@@ -188,9 +198,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
                 backgroundColor: AppTheme.cardDark,
                 minHeight: 3,
               ),
-            Expanded(
-              child: WebViewWidget(controller: _controller),
-            ),
+            Expanded(child: WebViewWidget(controller: _controller)),
             // Bottom Action Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -216,7 +224,10 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
                         children: [
                           const Text(
                             'Total Tagihan:',
-                            style: TextStyle(fontSize: 11, color: Colors.white54),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white54,
+                            ),
                           ),
                           Text(
                             'Rp ${widget.totalAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
@@ -231,21 +242,33 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton.icon(
-                      onPressed: _isCheckingStatus ? null : () => _checkPaymentStatus(silent: false),
+                      onPressed: _isCheckingStatus
+                          ? null
+                          : () => _checkPaymentStatus(silent: false),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryGreen,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       icon: _isCheckingStatus
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Icon(Icons.check_circle_outline, size: 18),
-                      label: Text(_isCheckingStatus ? 'Mengecek...' : 'Saya Sudah Bayar'),
+                      label: Text(
+                        _isCheckingStatus ? 'Mengecek...' : 'Saya Sudah Bayar',
+                      ),
                     ),
                   ],
                 ),

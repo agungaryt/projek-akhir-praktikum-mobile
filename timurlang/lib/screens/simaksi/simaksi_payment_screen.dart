@@ -5,14 +5,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../config/theme.dart';
 import '../../config/routes.dart';
 import '../../models/mountain.dart';
 import '../../models/simaksi_permit.dart';
 import '../../services/auth_service.dart';
-import '../../services/blockchain_service.dart';
+import '../../services/database_service.dart';
+import '../../services/notification_service.dart';
+import '../../config/constants.dart';
 import '../../services/midtrans_service.dart';
 import '../../utils/currency_utils.dart';
 import '../../utils/time_zone_helper.dart';
@@ -33,7 +35,7 @@ class _SimaksiPaymentScreenState extends State<SimaksiPaymentScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
+    _args = (Get.arguments ?? ModalRoute.of(context)?.settings.arguments) as Map<String, dynamic>;
   }
 
   // ==========================================================================
@@ -98,15 +100,12 @@ class _SimaksiPaymentScreenState extends State<SimaksiPaymentScreen> {
     }
 
     // Buka WebView Midtrans Snap untuk pembayaran
-    final isPaid = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MidtransPaymentScreen(
-          orderId: orderId,
-          redirectUrl: snapResult.redirectUrl!,
-          mountainName: mountain.namaGunung,
-          totalAmount: totalBiayaIDR.toInt(),
-        ),
+    final isPaid = await Get.to<bool>(
+      () => MidtransPaymentScreen(
+        orderId: orderId,
+        redirectUrl: snapResult.redirectUrl!,
+        mountainName: mountain.namaGunung,
+        totalAmount: totalBiayaIDR.toInt(),
       ),
     );
 
@@ -167,12 +166,12 @@ class _SimaksiPaymentScreenState extends State<SimaksiPaymentScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Get.back(),
             child: const Text('Batal', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(ctx);
+              Get.back();
               _issuePermitAfterPayment();
             },
             style: ElevatedButton.styleFrom(
@@ -199,18 +198,35 @@ class _SimaksiPaymentScreenState extends State<SimaksiPaymentScreen> {
       final namaBasecamp = _args['namaBasecamp'] as String?;
       final dataAnggota = _args['dataAnggota'] as String?;
 
-      final permit = await BlockchainService.instance.createPermit(
+      final permitId = 'SIMAKSI-${DateTime.now().millisecondsSinceEpoch}';
+      final now = DateTime.now();
+
+      final permit = SimaksiPermit(
+        id: permitId,
         userId: user.id,
         gunungId: mountain.id,
         basecampId: basecampId,
-        namaBasecamp: namaBasecamp,
+        namaBasecamp: namaBasecamp ?? 'Jalur Resmi ${mountain.namaGunung}',
         tanggalNaik: _args['tanggalNaik'] as DateTime,
         tanggalTurun: _args['tanggalTurun'] as DateTime,
         jumlahAnggota: _args['jumlahAnggota'] as int,
+        statusIzin: AppConstants.statusTerdaftar,
+        blockHash: permitId,
+        previousHash: '',
+        nonce: 0,
         namaGunung: mountain.namaGunung,
         totalBiaya: convertedCost,
         matauang: _selectedCurrency,
         dataAnggota: dataAnggota,
+        createdAt: now,
+      );
+
+      await DatabaseService.instance.insertSimaksiPermit(permit);
+
+      await NotificationService.instance.showNotification(
+        id: permit.id.hashCode,
+        title: 'Tiket Simaksi Berhasil Diterbitkan',
+        body: 'Izin pendakian ${permit.namaGunung ?? ""} berhasil dibuat. Tunjukkan QR code di pos pendakian.',
       );
 
       if (mounted) {
@@ -504,38 +520,6 @@ class _SimaksiPaymentScreenState extends State<SimaksiPaymentScreen> {
                             ],
                           ),
                         ),
-                        if (permit.blockHash.startsWith('0x')) ...[
-                          const SizedBox(height: 8),
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(6),
-                              onTap: () => BlockchainService.openExplorer(context, permit.blockHash),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1B4332).withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.open_in_new_rounded, size: 12, color: AppTheme.primary),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Lihat di Polygonscan (On-Chain)',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.primary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
                         const SizedBox(height: 10),
                         const Text(
                           'Tunjukkan QR ini ke pos Basecamp untuk verifikasi check-in.\n(QR Code ini bersifat sekali pakai dan otomatis hangus setelah di-scan)',
@@ -643,9 +627,9 @@ class _SimaksiPaymentScreenState extends State<SimaksiPaymentScreen> {
                     height: 46,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(ctx);
-                        Navigator.popUntil(context, ModalRoute.withName(AppRoutes.home));
-                        Navigator.pushNamed(context, AppRoutes.simaksiTicket);
+                        Get.back();
+                        Get.offAllNamed(AppRoutes.home);
+                        Get.toNamed(AppRoutes.simaksiTicket);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,

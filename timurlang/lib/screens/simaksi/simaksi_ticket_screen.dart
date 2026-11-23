@@ -4,15 +4,17 @@
 // ============================================
 
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../config/routes.dart';
 import '../../models/simaksi_permit.dart';
 import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
-import '../../services/supabase_service.dart';
 import '../../widgets/ticket_card.dart';
 
 class SimaksiTicketScreen extends StatefulWidget {
@@ -27,7 +29,8 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
   List<SimaksiPermit> _permits = [];
   bool _isLoading = true;
   Timer? _autoRefreshTimer;
-  String _selectedFilter = 'Semua'; // 'Semua', 'Terdaftar', 'Di Jalur', 'Selesai'
+  String _selectedFilter =
+      'Semua'; // 'Semua', 'Terdaftar', 'Di Jalur', 'Selesai'
 
   @override
   void initState() {
@@ -51,17 +54,9 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
   Future<void> _loadTickets({bool silent = false}) async {
     final user = AuthService.instance.currentUser;
     if (user != null) {
-      // Tarik permit terbaru dari Supabase jika online
-      if (SupabaseService.instance.isInitialized) {
-        try {
-          final remotePermits = await SupabaseService.instance.getPermitsByUser(user.id);
-          for (final p in remotePermits) {
-            await DatabaseService.instance.insertPermit(p);
-          }
-        } catch (_) {}
-      }
-
-      final permits = await DatabaseService.instance.getPermitsByUser(user.id);
+      final permits = await DatabaseService.instance.getPermitsByUserId(
+        user.id,
+      );
       if (mounted) {
         setState(() {
           _permits = permits;
@@ -87,16 +82,23 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
             !p.isRefundRequested;
       }).toList();
     } else if (_selectedFilter == 'Di Jalur') {
-      return _permits.where((p) => p.statusIzin == AppConstants.statusDiJalur).toList();
+      return _permits
+          .where((p) => p.statusIzin == AppConstants.statusDiJalur)
+          .toList();
     } else if (_selectedFilter == 'Selesai') {
-      return _permits.where((p) => p.statusIzin == AppConstants.statusSelesai).toList();
+      return _permits
+          .where((p) => p.statusIzin == AppConstants.statusSelesai)
+          .toList();
     } else if (_selectedFilter == 'Dibatalkan') {
-      return _permits.where((p) =>
-        p.isCancelled ||
-        p.isOfficialCancellation ||
-        p.isRefundRequested ||
-        p.isRefundCompleted
-      ).toList();
+      return _permits
+          .where(
+            (p) =>
+                p.isCancelled ||
+                p.isOfficialCancellation ||
+                p.isRefundRequested ||
+                p.isRefundCompleted,
+          )
+          .toList();
     }
     return _permits;
   }
@@ -115,16 +117,23 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
             !p.isRefundRequested;
       }).length;
     } else if (filter == 'Di Jalur') {
-      return _permits.where((p) => p.statusIzin == AppConstants.statusDiJalur).length;
+      return _permits
+          .where((p) => p.statusIzin == AppConstants.statusDiJalur)
+          .length;
     } else if (filter == 'Selesai') {
-      return _permits.where((p) => p.statusIzin == AppConstants.statusSelesai).length;
+      return _permits
+          .where((p) => p.statusIzin == AppConstants.statusSelesai)
+          .length;
     } else if (filter == 'Dibatalkan') {
-      return _permits.where((p) =>
-        p.isCancelled ||
-        p.isOfficialCancellation ||
-        p.isRefundRequested ||
-        p.isRefundCompleted
-      ).length;
+      return _permits
+          .where(
+            (p) =>
+                p.isCancelled ||
+                p.isOfficialCancellation ||
+                p.isRefundRequested ||
+                p.isRefundCompleted,
+          )
+          .length;
     }
     return _permits.length;
   }
@@ -155,7 +164,9 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primary),
+            )
           : RefreshIndicator(
               color: AppTheme.primary,
               backgroundColor: AppTheme.surface,
@@ -170,12 +181,16 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
                     child: filtered.isEmpty
                         ? _buildEmptyState()
                         : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             itemCount: filtered.length,
                             itemBuilder: (context, i) {
                               return TicketCard(
                                 permit: filtered[i],
-                                onStatusChanged: () => _loadTickets(silent: false),
+                                onStatusChanged: () =>
+                                    _loadTickets(silent: false),
                               );
                             },
                           ),
@@ -195,7 +210,10 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         border: Border(
-          bottom: BorderSide(color: AppTheme.border.withValues(alpha: 0.6), width: 1),
+          bottom: BorderSide(
+            color: AppTheme.border.withValues(alpha: 0.6),
+            width: 1,
+          ),
         ),
       ),
       child: SingleChildScrollView(
@@ -209,16 +227,24 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
             Color badgeBg;
             Color badgeText;
             if (filter == 'Di Jalur') {
-              badgeBg = isSelected ? Colors.white.withValues(alpha: 0.25) : AppTheme.secondary.withValues(alpha: 0.15);
+              badgeBg = isSelected
+                  ? Colors.white.withValues(alpha: 0.25)
+                  : AppTheme.secondary.withValues(alpha: 0.15);
               badgeText = isSelected ? Colors.white : AppTheme.secondary;
             } else if (filter == 'Selesai') {
-              badgeBg = isSelected ? Colors.white.withValues(alpha: 0.25) : const Color(0xFF94A3B8).withValues(alpha: 0.2);
+              badgeBg = isSelected
+                  ? Colors.white.withValues(alpha: 0.25)
+                  : const Color(0xFF94A3B8).withValues(alpha: 0.2);
               badgeText = isSelected ? Colors.white : const Color(0xFF64748B);
             } else if (filter == 'Dibatalkan') {
-              badgeBg = isSelected ? Colors.white.withValues(alpha: 0.25) : AppTheme.dangerRed.withValues(alpha: 0.15);
+              badgeBg = isSelected
+                  ? Colors.white.withValues(alpha: 0.25)
+                  : AppTheme.dangerRed.withValues(alpha: 0.15);
               badgeText = isSelected ? Colors.white : AppTheme.dangerRed;
             } else {
-              badgeBg = isSelected ? Colors.white.withValues(alpha: 0.25) : AppTheme.primarySubtle;
+              badgeBg = isSelected
+                  ? Colors.white.withValues(alpha: 0.25)
+                  : AppTheme.primarySubtle;
               badgeText = isSelected ? Colors.white : AppTheme.primary;
             }
 
@@ -231,9 +257,14 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
                 borderRadius: BorderRadius.circular(9999),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.primary : AppTheme.surfaceSubtle,
+                    color: isSelected
+                        ? AppTheme.primary
+                        : AppTheme.surfaceSubtle,
                     borderRadius: BorderRadius.circular(9999),
                     border: Border.all(
                       color: isSelected ? AppTheme.primary : AppTheme.border,
@@ -256,13 +287,20 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
                         filter,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.5,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                          color: isSelected ? Colors.white : AppTheme.textPrimary,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          color: isSelected
+                              ? Colors.white
+                              : AppTheme.textPrimary,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: badgeBg,
                           borderRadius: BorderRadius.circular(10),
@@ -311,7 +349,9 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
     }
 
     return ListView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
       children: [
         SizedBox(height: MediaQuery.of(context).size.height * 0.12),
         Center(
@@ -354,7 +394,7 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
                   const SizedBox(height: 22),
                   ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.mountainList);
+                      Get.toNamed(AppRoutes.mountainList);
                     },
                     icon: const Icon(Icons.terrain_rounded, size: 18),
                     label: Text(
@@ -367,8 +407,13 @@ class _SimaksiTicketScreenState extends State<SimaksiTicketScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(9999),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ],

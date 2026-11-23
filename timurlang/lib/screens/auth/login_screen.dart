@@ -1,14 +1,16 @@
 // ============================================
 // TimurLang - Login Screen
+// Modul VIII: GetX State Management (Obx, Controller)
+// Preserving Original Aura Travel Design System & Plus Jakarta Sans Font
 // ============================================
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../config/theme.dart';
 import '../../config/routes.dart';
-import '../../models/user.dart';
-import '../../services/auth_service.dart';
+import '../../controllers/auth_controller.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../utils/validators.dart';
 
@@ -24,10 +26,11 @@ class _LoginScreenState extends State<LoginScreen>
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  bool _isLoading = false;
-  bool _rememberMe = false;
+
   late AnimationController _animCtrl;
   late Animation<Offset> _slideAnim;
+
+  final AuthController auth = Get.find<AuthController>();
 
   @override
   void initState() {
@@ -51,275 +54,11 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  Future<void> _login() async {
+  void _handleLogin() {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
-
-    final result = await AuthService.instance.login(
+    auth.login(
       email: _emailCtrl.text.trim(),
       password: _passwordCtrl.text,
-      rememberMe: _rememberMe,
-    );
-
-    setState(() => _isLoading = false);
-
-    if (!mounted) return;
-
-    if (result.success) {
-      final user = AuthService.instance.currentUser!;
-      if (user.peran == 'basecamp') {
-        Navigator.pushReplacementNamed(context, AppRoutes.basecampDashboard);
-      } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result.message,
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          ),
-          backgroundColor: AppTheme.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
-    }
-  }
-
-  // ==========================================================================
-  // 👆 [KODINGAN UI FITUR BIOMETRIK - LOGIN SIDIK JARI / FINGERPRINT]
-  // --------------------------------------------------------------------------
-  // Menghubungkan tombol sensor fingerprint di layar login ke AuthService
-  // Mendukung login cepat dan aman dengan sidik jari pengguna
-  // ==========================================================================
-  Future<void> _biometricLogin() async {
-    final email = _emailCtrl.text.trim();
-    if (email.isNotEmpty) {
-      await _executeBiometricAuth(email: email);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    final users = await AuthService.instance.getBiometricEnabledUsers();
-    setState(() => _isLoading = false);
-
-    if (!mounted) return;
-
-    if (users.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Belum ada akun dengan sidik jari aktif. Masukkan email & kata sandi terlebih dahulu.',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          ),
-          backgroundColor: AppTheme.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
-      return;
-    }
-
-    if (users.length == 1) {
-      await _executeBiometricAuth(userId: users.first.id);
-      return;
-    }
-
-    final selectedUser = await _showAccountPickerSheet(users);
-    if (selectedUser != null && mounted) {
-      await _executeBiometricAuth(userId: selectedUser.id);
-    }
-  }
-
-  Future<void> _executeBiometricAuth({String? email, String? userId}) async {
-    setState(() => _isLoading = true);
-    final result = await AuthService.instance.authenticateBiometric(
-      email: email,
-      userId: userId,
-      rememberMe: _rememberMe,
-    );
-    setState(() => _isLoading = false);
-
-    if (!mounted) return;
-
-    if (result.success) {
-      final user = AuthService.instance.currentUser!;
-      if (user.peran == 'basecamp') {
-        Navigator.pushReplacementNamed(context, AppRoutes.basecampDashboard);
-      } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
-      }
-    } else {
-      if (result.message != 'Verifikasi sidik jari dibatalkan.') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              result.message,
-              style: GoogleFonts.plusJakartaSans(color: Colors.white),
-            ),
-            backgroundColor: AppTheme.error,
-            duration: const Duration(seconds: 4),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<User?> _showAccountPickerSheet(List<User> users) {
-    return showModalBottomSheet<User>(
-      context: context,
-      backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primarySubtle,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.border),
-                      ),
-                      child: const Icon(
-                        Icons.fingerprint_rounded,
-                        color: AppTheme.primary,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Pilih Akun Sidik Jari',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Pilih profil untuk masuk secara instan',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12.5,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                const Divider(color: AppTheme.border, height: 1),
-                const SizedBox(height: 12),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: users.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final u = users[index];
-                      final isBasecamp = u.peran == 'basecamp';
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.surfaceSubtle,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppTheme.border),
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          leading: CircleAvatar(
-                            backgroundColor: isBasecamp
-                                ? AppTheme.accent.withValues(alpha: 0.15)
-                                : AppTheme.primarySubtle,
-                            child: Icon(
-                              isBasecamp
-                                  ? Icons.house_rounded
-                                  : Icons.person_rounded,
-                              color: isBasecamp
-                                  ? AppTheme.accent
-                                  : AppTheme.primary,
-                            ),
-                          ),
-                          title: Text(
-                            u.namaLengkap,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14.5,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                          subtitle: Text(
-                            u.email,
-                            style: GoogleFonts.plusJakartaSans(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isBasecamp
-                                  ? AppTheme.accent.withValues(alpha: 0.12)
-                                  : AppTheme.primarySubtle,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isBasecamp
-                                    ? AppTheme.accent.withValues(alpha: 0.3)
-                                    : AppTheme.primary.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Text(
-                              u.peran.toUpperCase(),
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: isBasecamp
-                                    ? AppTheme.accent
-                                    : AppTheme.primary,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          onTap: () => Navigator.pop(context, u),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -406,10 +145,7 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ==========================================================================
-                          // 🎨 [1. UBAH WARNA INPUTAN EMAIL]
-                          // --------------------------------------------------------------------------
-                          // ==========================================================================
+                          // Email Field
                           CustomTextField(
                             controller: _emailCtrl,
                             label: 'Email',
@@ -417,15 +153,9 @@ class _LoginScreenState extends State<LoginScreen>
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: Validators.email,
-                            // fillColor: Colors.white, // <-- AKTIFKAN & UBAH WARNA BACKGROUND EMAIL DI SINI
                           ),
 
-                          // ==========================================================================
-                          // 🎨 [2. UBAH WARNA INPUTAN KATA SANDI]
-                          // --------------------------------------------------------------------------
-                          // Cara Ubah:
-                          // - Hapus tanda '//' pada baris `fillColor` di bawah ini.
-                          // ==========================================================================
+                          // Password Field
                           CustomTextField(
                             controller: _passwordCtrl,
                             label: 'Kata Sandi',
@@ -433,17 +163,16 @@ class _LoginScreenState extends State<LoginScreen>
                             prefixIcon: Icons.lock_outline_rounded,
                             isPassword: true,
                             validator: Validators.password,
-                            // fillColor: Colors.white, // <-- AKTIFKAN & UBAH WARNA BACKGROUND KATA SANDI DI SINI
                           ),
 
-                          // Remember Me checkbox
-                          Row(
+                          // Remember Me Checkbox
+                          Obx(() => Row(
                             children: [
                               SizedBox(
                                 height: 24,
                                 width: 24,
                                 child: Checkbox(
-                                  value: _rememberMe,
+                                  value: auth.rememberMe.value,
                                   activeColor: AppTheme.primary,
                                   checkColor: Colors.white,
                                   materialTapTargetSize:
@@ -456,18 +185,14 @@ class _LoginScreenState extends State<LoginScreen>
                                     width: 1.5,
                                   ),
                                   onChanged: (val) {
-                                    setState(() {
-                                      _rememberMe = val ?? false;
-                                    });
+                                    auth.rememberMe.value = val ?? false;
                                   },
                                 ),
                               ),
                               const SizedBox(width: 10),
                               GestureDetector(
                                 onTap: () {
-                                  setState(() {
-                                    _rememberMe = !_rememberMe;
-                                  });
+                                  auth.rememberMe.value = !auth.rememberMe.value;
                                 },
                                 child: Text(
                                   'Ingat Saya',
@@ -479,38 +204,28 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ),
                             ],
-                          ),
+                          )),
                           const SizedBox(height: 20),
 
-                          // ==========================================================================
-                          // 🎨 [3. UBAH WARNA TOMBOL MASUK]
-                          // --------------------------------------------------------------------------
-                          // Cara Ubah:
-                          // 1. Warna Background (Gradien): Ganti warna di dalam `LinearGradient(colors: [...])`
-                          //    Contoh warna solid: [Colors.green, Colors.green] atau [Color(0xFF1B4332), Color(0xFF2D6A4F)]
-                          // 2. Warna Bayangan (Shadow): Ganti `color: AppTheme.primary.withValues(alpha: 0.3)` di BoxShadow
-                          // 3. Warna Teks "Masuk": Ganti `color: Colors.white` pada TextStyle teks Masuk
-                          // ==========================================================================
-                          Container(
+                          // Tombol Masuk
+                          Obx(() => Container(
                             width: double.infinity,
                             height: 50,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [AppTheme.primary, AppTheme.secondary], // <-- UBAH WARNA BACKGROUND TOMBOL MASUK DI SINI
+                                colors: [AppTheme.primary, AppTheme.secondary],
                               ),
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primary.withValues(
-                                    alpha: 0.3,
-                                  ), // <-- UBAH WARNA BAYANGAN / GLOW DI SINI
+                                  color: AppTheme.primary.withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
                             child: ElevatedButton(
-                              onPressed: _isLoading ? null : _login,
+                              onPressed: auth.isLoading.value ? null : _handleLogin,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
@@ -518,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
-                              child: _isLoading
+                              child: auth.isLoading.value
                                   ? const SizedBox(
                                       width: 20,
                                       height: 20,
@@ -532,63 +247,18 @@ class _LoginScreenState extends State<LoginScreen>
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.white, // <-- UBAH WARNA TEKS "MASUK" DI SINI
+                                        color: Colors.white,
                                       ),
                                     ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // ==========================================================================
-                          // 🎨 [4. UBAH WARNA TOMBOL MASUK DENGAN SIDIK JARI]
-                          // --------------------------------------------------------------------------
-                          // Cara Ubah:
-                          // 1. Warna Background: Ganti `color: AppTheme.surfaceSubtle` pada BoxDecoration (contoh: Colors.white)
-                          // 2. Warna Garis Tepi (Border): Ganti `Border.all(color: AppTheme.border)` (contoh: Colors.grey)
-                          // 3. Warna Ikon Sidik Jari: Ganti `color: AppTheme.primary` pada Icon(Icons.fingerprint_rounded)
-                          // 4. Warna Teks Judul: Ganti `color: AppTheme.textPrimary` pada TextStyle Text('Masuk dengan Sidik Jari')
-                          // ==========================================================================
-                          Container(
-                            width: double.infinity,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: AppTheme.surfaceSubtle, // <-- UBAH WARNA BACKGROUND TOMBOL SIDIK JARI DI SINI
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: AppTheme.border,
-                              ), // <-- UBAH WARNA BORDER / GARIS TEPI DI SINI
-                            ),
-                            child: OutlinedButton.icon(
-                              onPressed: _isLoading ? null : _biometricLogin,
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                side: BorderSide.none,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.fingerprint_rounded,
-                                size: 22,
-                                color: AppTheme.primary, // <-- UBAH WARNA IKON SIDIK JARI DI SINI
-                              ),
-                              label: Text(
-                                'Masuk dengan Sidik Jari',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.textPrimary, // <-- UBAH WARNA TEKS SIDIK JARI DI SINI
-                                ),
-                              ),
-                            ),
-                          ),
+                          )),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // Register link
+                  // Link Register
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -600,8 +270,7 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ),
                       GestureDetector(
-                        onTap: () =>
-                            Navigator.pushNamed(context, AppRoutes.register),
+                        onTap: () => Get.toNamed(AppRoutes.register),
                         child: Text(
                           'Daftar Sekarang',
                           style: GoogleFonts.plusJakartaSans(

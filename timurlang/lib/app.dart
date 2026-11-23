@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'config/theme.dart';
 import 'config/routes.dart';
+
+// Bindings (Modul VIII: GetX Bindings & Dependency Injection)
+import 'bindings/initial_binding.dart';
+import 'bindings/auth_binding.dart';
+import 'bindings/mountain_binding.dart';
+import 'bindings/simaksi_binding.dart';
+import 'bindings/profile_binding.dart';
 
 // Screens
 import 'screens/splash_screen.dart';
@@ -12,59 +20,97 @@ import 'screens/mountain/mountain_detail_screen.dart';
 import 'screens/simaksi/simaksi_form_screen.dart';
 import 'screens/simaksi/simaksi_payment_screen.dart';
 import 'screens/simaksi/simaksi_ticket_screen.dart';
-import 'screens/basecamp/basecamp_dashboard_screen.dart';
-import 'screens/basecamp/ticket_verify_screen.dart';
-import 'screens/basecamp/hiker_monitor_screen.dart';
 import 'screens/map/map_screen.dart';
 import 'screens/weather/weather_screen.dart';
 import 'screens/compass/compass_screen.dart';
-import 'screens/safety/fall_detection_screen.dart';
-import 'screens/safety/sos_beacon_screen.dart';
-import 'screens/ai/survival_assistant_screen.dart';
-import 'screens/game/mountain_climber_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/profile/personal_data_screen.dart';
 import 'screens/profile/medical_profile_screen.dart';
-import 'screens/feedback/course_feedback_screen.dart';
 
 class MainApp extends StatelessWidget {
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
   const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
+    return GetMaterialApp(
       title: 'TimurLang',
       theme: AppTheme.auraTheme,
       debugShowCheckedModeBanner: false,
       initialRoute: AppRoutes.splash,
-      routes: {
-        AppRoutes.splash: (context) => const SplashScreen(),
-        AppRoutes.login: (context) => const LoginScreen(),
-        AppRoutes.register: (context) => const RegisterScreen(),
-        AppRoutes.home: (context) => const HomeScreen(),
-        AppRoutes.mountainList: (context) => const MountainListScreen(),
-        AppRoutes.mountainDetail: (context) => const MountainDetailScreen(),
-        AppRoutes.simaksiForm: (context) => const SimaksiFormScreen(),
-        AppRoutes.simaksiPayment: (context) => const SimaksiPaymentScreen(),
-        AppRoutes.simaksiTicket: (context) => const SimaksiTicketScreen(),
-        AppRoutes.basecampDashboard: (context) => const BasecampDashboardScreen(),
-        AppRoutes.ticketVerify: (context) => const TicketVerifyScreen(),
-        AppRoutes.hikerMonitor: (context) => const HikerMonitorScreen(),
-        AppRoutes.map: (context) => const MapScreen(),
-        AppRoutes.weather: (context) => const WeatherScreen(),
-        AppRoutes.compass: (context) => const CompassScreen(),
-        AppRoutes.fallDetection: (context) => const FallDetectionScreen(),
-        AppRoutes.sos: (context) => const SosBeaconScreen(),
-        AppRoutes.survivalAssistant: (context) => const SurvivalAssistantScreen(),
-        AppRoutes.mountainClimber: (context) => const MountainClimberScreen(),
-        AppRoutes.profile: (context) => const ProfileScreen(),
-        AppRoutes.personalData: (context) => const PersonalDataScreen(),
-        AppRoutes.medicalProfile: (context) => const MedicalProfileScreen(),
-        AppRoutes.courseFeedback: (context) => const CourseFeedbackScreen(),
-      },
+      initialBinding: InitialBinding(),
+      getPages: [
+        GetPage(
+          name: AppRoutes.splash,
+          page: () => const SplashScreen(),
+        ),
+        GetPage(
+          name: AppRoutes.login,
+          page: () => const LoginScreen(),
+          binding: AuthBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.register,
+          page: () => const RegisterScreen(),
+          binding: AuthBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.home,
+          page: () => const HomeScreen(),
+          binding: InitialBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.mountainList,
+          page: () => const MountainListScreen(),
+          binding: MountainBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.mountainDetail,
+          page: () => const MountainDetailScreen(),
+          binding: MountainBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.simaksiForm,
+          page: () => const SimaksiFormScreen(),
+          binding: SimaksiBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.simaksiPayment,
+          page: () => const SimaksiPaymentScreen(),
+          binding: SimaksiBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.simaksiTicket,
+          page: () => const SimaksiTicketScreen(),
+          binding: SimaksiBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.map,
+          page: () => const MapScreen(),
+        ),
+        GetPage(
+          name: AppRoutes.weather,
+          page: () => const WeatherScreen(),
+        ),
+        GetPage(
+          name: AppRoutes.compass,
+          page: () => const CompassScreen(),
+        ),
+        GetPage(
+          name: AppRoutes.profile,
+          page: () => const ProfileScreen(),
+          binding: ProfileBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.personalData,
+          page: () => const PersonalDataScreen(),
+          binding: ProfileBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.medicalProfile,
+          page: () => const MedicalProfileScreen(),
+          binding: ProfileBinding(),
+        ),
+      ],
     );
   }
 }

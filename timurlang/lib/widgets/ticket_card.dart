@@ -11,7 +11,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../config/constants.dart';
 import '../config/theme.dart';
 import '../models/simaksi_permit.dart';
-import '../services/blockchain_service.dart';
 import '../services/database_service.dart';
 import '../utils/date_utils.dart';
 import '../utils/time_zone_helper.dart';
@@ -76,57 +75,20 @@ class _TicketCardState extends State<TicketCard> {
   }
 
   Future<void> _loadBasecampName() async {
-    try {
-      // 1. Cek langsung via basecampId
-      if (widget.permit.basecampId != null &&
-          widget.permit.basecampId!.isNotEmpty) {
-        final bc = await DatabaseService.instance.getBasecampById(widget.permit.basecampId!);
-        if (bc != null && mounted) {
-          setState(() {
-            _resolvedBasecampName = bc.namaPos;
-          });
-          return;
-        }
+    final candidateName = widget.permit.namaBasecamp;
+    if (candidateName != null && candidateName.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _resolvedBasecampName = candidateName;
+        });
       }
-
-      // 2. Jika permit.namaBasecamp sudah ada dan bukan default generic, gunakan langsung
-      final candidateName = widget.permit.namaBasecamp;
-      if (candidateName != null &&
-          candidateName.isNotEmpty &&
-          candidateName != 'Pos Basecamp Resmi') {
-        if (mounted) {
-          setState(() {
-            _resolvedBasecampName = candidateName;
-          });
-        }
-        return;
+    } else {
+      if (mounted) {
+        setState(() {
+          _resolvedBasecampName = 'Pos Jalur ${widget.permit.namaGunung ?? ""}';
+        });
       }
-
-      // 3. Fallback jika basecampId tidak terhubung langsung, cek dari gunungId
-      if (widget.permit.gunungId.isNotEmpty) {
-        final bcs = await DatabaseService.instance.getRegisteredBasecampsByMountain(widget.permit.gunungId);
-        if (bcs.isNotEmpty && mounted) {
-          // Jika untuk Gunung Merbabu (mtn-014), gunakan jalur Selo Boyolali sebagai basecamp utama yang dipilih pendaki
-          if (widget.permit.gunungId == 'mtn-014' ||
-              (widget.permit.namaGunung?.toLowerCase().contains('merbabu') ?? false)) {
-            final selo = bcs.firstWhere(
-              (b) => b.namaPos.toLowerCase().contains('selo'),
-              orElse: () => bcs.first,
-            );
-            setState(() {
-              _resolvedBasecampName = selo.namaPos;
-            });
-            return;
-          }
-          if (bcs.length == 1) {
-            setState(() {
-              _resolvedBasecampName = bcs.first.namaPos;
-            });
-            return;
-          }
-        }
-      }
-    } catch (_) {}
+    }
   }
 
   /// QR hanya aktif saat tiket baru terdaftar / diajukan atau telah di-reschedule.
@@ -625,40 +587,6 @@ class _TicketCardState extends State<TicketCard> {
                               ),
                             ),
                           ),
-                          if (widget.permit.blockHash.startsWith('0x')) ...[
-                            const SizedBox(height: 8),
-                            Center(
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(6),
-                                  onTap: () => BlockchainService.openExplorer(context, widget.permit.blockHash),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primarySubtle,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.open_in_new_rounded, size: 12, color: AppTheme.primary),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'Verifikasi di Polygonscan ↗',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppTheme.primary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
                           if (widget.permit.isCancellableByUser) ...[
                             const SizedBox(height: 14),
                             SizedBox(
@@ -1633,7 +1561,7 @@ class _TicketCardState extends State<TicketCard> {
                                         ? otherCtrl.text.trim()
                                         : selectedReason;
 
-                                    final res = await BlockchainService.instance.cancelPermitByUser(
+                                    final res = await DatabaseService.instance.cancelPermitByUser(
                                       permitId: widget.permit.id,
                                       reason: finalReason,
                                     );
@@ -1904,7 +1832,7 @@ class _TicketCardState extends State<TicketCard> {
                               }
 
                               setModalState(() => isSubmitting = true);
-                              final res = await BlockchainService.instance.requestRefund(
+                              final res = await DatabaseService.instance.requestRefund(
                                 permitId: widget.permit.id,
                                 bankOrWallet: selectedProvider,
                                 accountNumber: numStr,
@@ -2118,7 +2046,7 @@ class _TicketCardState extends State<TicketCard> {
                           ? null
                           : () async {
                               setModalState(() => isSubmitting = true);
-                              final res = await BlockchainService.instance.reschedulePermit(
+                              final res = await DatabaseService.instance.reschedulePermit(
                                 permitId: widget.permit.id,
                                 newTanggalNaik: newTanggalNaik,
                                 newTanggalTurun: newTanggalTurun,

@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
-import '../../services/sensor_service.dart';
+
 
 class CompassScreen extends StatefulWidget {
   const CompassScreen({super.key});
@@ -23,6 +23,17 @@ class CompassScreen extends StatefulWidget {
 }
 
 class _CompassScreenState extends State<CompassScreen> {
+  String _getCardinalDirection(double heading) {
+    if (heading >= 337.5 || heading < 22.5) return 'Utara (N)';
+    if (heading >= 22.5 && heading < 67.5) return 'Timur Laut (NE)';
+    if (heading >= 67.5 && heading < 112.5) return 'Timur (E)';
+    if (heading >= 112.5 && heading < 157.5) return 'Tenggara (SE)';
+    if (heading >= 157.5 && heading < 202.5) return 'Selatan (S)';
+    if (heading >= 202.5 && heading < 247.5) return 'Barat Daya (SW)';
+    if (heading >= 247.5 && heading < 292.5) return 'Barat (W)';
+    return 'Barat Laut (NW)';
+  }
+
   double _heading = 0;
 
   @override
@@ -83,7 +94,7 @@ class _CompassScreenState extends State<CompassScreen> {
                         border: Border.all(color: const Color(0xFFD4E0D2)),
                       ),
                       child: Text(
-                        SensorService.getCardinalDirectionFull(_heading),
+                        _getCardinalDirection(_heading),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,

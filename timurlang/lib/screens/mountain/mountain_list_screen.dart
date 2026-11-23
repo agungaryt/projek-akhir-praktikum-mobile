@@ -1,15 +1,17 @@
 // ============================================
 // TimurLang - Mountain List Screen
-// Search & filter mountains
+// Modul V (HTTP Request/REST API) & Modul VIII (GetX State Management)
+// Preserving Original Aura Travel Design System & Plus Jakarta Sans Font
 // ============================================
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../config/routes.dart';
-import '../../models/mountain.dart';
-import '../../services/database_service.dart';
+import '../../controllers/mountain_controller.dart';
 import '../../widgets/mountain_card.dart';
 
 class MountainListScreen extends StatefulWidget {
@@ -21,63 +23,34 @@ class MountainListScreen extends StatefulWidget {
 }
 
 class _MountainListScreenState extends State<MountainListScreen> {
-  List<Mountain> _mountains = [];
-  List<Mountain> _filtered = [];
-  bool _isLoading = true;
+  final MountainController controller = Get.find<MountainController>();
+  final _searchCtrl = TextEditingController();
+  bool _showFilters = false;
+
   String? _selectedGrade;
   bool? _sumberAir;
   RangeValues _elevasiRange = const RangeValues(0, 5000);
-  final _searchCtrl = TextEditingController();
-  bool _showFilters = false;
 
   @override
   void initState() {
     super.initState();
-    _loadMountains();
+    _searchCtrl.text = controller.searchQuery.value;
   }
 
-  Future<void> _loadMountains() async {
-    try {
-      final mountains = await DatabaseService.instance.getAllMountains();
-      setState(() {
-        _mountains = mountains;
-        _filtered = mountains;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
-      }
-    }
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
-  void _applyFilters() {
-    setState(() {
-      _filtered = _mountains.where((m) {
-        // Search
-        if (_searchCtrl.text.isNotEmpty) {
-          if (!m.namaGunung.toLowerCase().contains(_searchCtrl.text.toLowerCase())) {
-            return false;
-          }
-        }
-        // Elevation
-        if (m.elevasiMdpl < _elevasiRange.start || m.elevasiMdpl > _elevasiRange.end) {
-          return false;
-        }
-        // Grade
-        if (_selectedGrade != null && m.tingkatBahaya != _selectedGrade) {
-          return false;
-        }
-        // Water source
-        if (_sumberAir != null && m.sumberAirTersedia != _sumberAir) {
-          return false;
-        }
-        return true;
-      }).toList();
-    });
+  void _applyLocalFilters() {
+    controller.filterMountainsWithCriteria(
+      search: _searchCtrl.text.trim(),
+      grade: _selectedGrade,
+      sumberAir: _sumberAir,
+      minElevasi: _elevasiRange.start.round(),
+      maxElevasi: _elevasiRange.end.round(),
+    );
   }
 
   void _resetFilters() {
@@ -86,8 +59,8 @@ class _MountainListScreenState extends State<MountainListScreen> {
       _selectedGrade = null;
       _sumberAir = null;
       _elevasiRange = const RangeValues(0, 5000);
-      _filtered = _mountains;
     });
+    controller.resetFilters();
   }
 
   @override
@@ -102,8 +75,14 @@ class _MountainListScreenState extends State<MountainListScreen> {
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
         if (!widget.embedded)
-          const SliverAppBar(
-            title: Text('Cari Gunung'),
+          SliverAppBar(
+            title: Text(
+              'Cari Gunung',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
             floating: true,
             snap: true,
           ),
@@ -125,26 +104,18 @@ class _MountainListScreenState extends State<MountainListScreen> {
                   ),
                   const SizedBox(height: 14),
                 ],
-                // ==========================================================================
-                // 🎨 [3. UBAH WARNA CARD CARI NAMA GUNUNG (SEARCH BAR)]
-                // --------------------------------------------------------------------------
-                // Cara Ubah:
-                // - Warna Background Bar: Ganti `fillColor: AppTheme.surface` (contoh: Colors.white)
-                // - Warna Garis Border: Ganti `borderSide: const BorderSide(color: AppTheme.border)`
-                // - Warna Ikon Kaca Pembesar: Ganti `color: AppTheme.primary` pada Icon(Icons.search_rounded)
-                // - Warna Kotak Ikon Filter (Kanan): Ganti `color: _showFilters ? ... : AppTheme.surfaceSubtle`
-                // ==========================================================================
-                // Search bar
+
+                // Search Bar
                 TextField(
                   controller: _searchCtrl,
-                  onChanged: (_) => _applyFilters(),
+                  onChanged: (_) => _applyLocalFilters(),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     color: AppTheme.textPrimary,
                   ),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: AppTheme.surface, // <-- UBAH WARNA BACKGROUND SEARCH BAR DI SINI
+                    fillColor: AppTheme.surface,
                     hintText: 'Cari nama gunung...',
                     hintStyle: GoogleFonts.plusJakartaSans(
                       color: AppTheme.textSecondary.withValues(alpha: 0.7),
@@ -152,7 +123,7 @@ class _MountainListScreenState extends State<MountainListScreen> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppTheme.border, width: 1.2), // <-- UBAH BORDER DI SINI
+                      borderSide: const BorderSide(color: AppTheme.border, width: 1.2),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -162,7 +133,7 @@ class _MountainListScreenState extends State<MountainListScreen> {
                       borderRadius: BorderRadius.circular(16),
                       borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
                     ),
-                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppTheme.primary), // <-- UBAH WARNA IKON SEARCH
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppTheme.primary),
                     suffixIcon: GestureDetector(
                       onTap: () => setState(() => _showFilters = !_showFilters),
                       child: Container(
@@ -188,105 +159,125 @@ class _MountainListScreenState extends State<MountainListScreen> {
                     ),
                   ),
                 ),
+
                 // Filters
                 if (_showFilters) ...[
                   const SizedBox(height: 14),
                   _buildFilters(),
                 ],
                 const SizedBox(height: 14),
+
                 // Results count & reset
-                Row(
-                  children: [
-                    Text(
-                      '${_filtered.length} gunung ditemukan',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: AppTheme.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (hasActiveFilter)
-                      GestureDetector(
-                        onTap: _resetFilters,
-                        child: Text(
-                          'Reset Filter',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            color: AppTheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                Obx(() {
+                  final count = controller.filteredMountains.length;
+                  return Row(
+                    children: [
+                      Text(
+                        '$count gunung ditemukan',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                  ],
-                ),
+                      const Spacer(),
+                      if (hasActiveFilter)
+                        GestureDetector(
+                          onTap: _resetFilters,
+                          child: Text(
+                            'Reset Filter',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                }),
                 const SizedBox(height: 10),
               ],
             ),
           ),
         ),
-        if (_isLoading)
-          const SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: CircularProgressIndicator(color: AppTheme.primary),
-            ),
-          )
-        else if (_filtered.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.terrain_rounded,
-                    size: 64,
-                    color: AppTheme.textSecondary.withValues(alpha: 0.35),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Gunung tidak ditemukan',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+
+        // Mountain List Content (Reactive GetX)
+        Obx(() {
+          if (controller.isLoading.value) {
+            return const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: CircularProgressIndicator(color: AppTheme.primary),
               ),
-            ),
-          )
-        else
-          SliverPadding(
+            );
+          }
+
+          final list = controller.filteredMountains;
+          if (list.isEmpty) {
+            return SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.terrain_rounded,
+                      size: 64,
+                      color: AppTheme.textSecondary.withValues(alpha: 0.35),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Gunung tidak ditemukan',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, i) {
+                  final mountain = list[i];
                   return MountainCard(
-                    mountain: _filtered[i],
-                    onTap: () => Navigator.pushNamed(
-                      context,
+                    mountain: mountain,
+                    onTap: () => Get.toNamed(
                       AppRoutes.mountainDetail,
-                      arguments: _filtered[i],
+                      arguments: mountain,
                     ),
                   );
                 },
-                childCount: _filtered.length,
+                childCount: list.length,
               ),
             ),
-          ),
+          );
+        }),
+
         const SliverToBoxAdapter(
           child: SizedBox(height: 80),
         ),
       ],
     );
 
+    final wrappedContent = RefreshIndicator(
+      color: AppTheme.primary,
+      onRefresh: () => controller.fetchMountains(),
+      child: content,
+    );
+
     if (widget.embedded) {
-      return SafeArea(child: content);
+      return SafeArea(child: wrappedContent);
     }
 
-    return Scaffold(body: SafeArea(child: content));
+    return Scaffold(body: SafeArea(child: wrappedContent));
   }
 
   Widget _buildFilters() {
@@ -394,7 +385,7 @@ class _MountainListScreenState extends State<MountainListScreen> {
               divisions: 50,
               onChanged: (v) {
                 setState(() => _elevasiRange = v);
-                _applyFilters();
+                _applyLocalFilters();
               },
             ),
           ),
@@ -436,7 +427,7 @@ class _MountainListScreenState extends State<MountainListScreen> {
                 borderRadius: BorderRadius.circular(10),
                 onTap: () {
                   setState(() => _selectedGrade = isSelected ? null : grade);
-                  _applyFilters();
+                  _applyLocalFilters();
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
@@ -472,7 +463,7 @@ class _MountainListScreenState extends State<MountainListScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Sumber Air (clean options without checkmark AI slop)
+          // Sumber Air
           Text(
             'Ketersediaan Sumber Air',
             style: GoogleFonts.plusJakartaSans(
@@ -490,7 +481,7 @@ class _MountainListScreenState extends State<MountainListScreen> {
                 icon: Icons.all_inclusive_rounded,
                 onTap: () {
                   setState(() => _sumberAir = null);
-                  _applyFilters();
+                  _applyLocalFilters();
                 },
               ),
               const SizedBox(width: 8),
@@ -500,7 +491,7 @@ class _MountainListScreenState extends State<MountainListScreen> {
                 icon: Icons.water_drop_outlined,
                 onTap: () {
                   setState(() => _sumberAir = _sumberAir == true ? null : true);
-                  _applyFilters();
+                  _applyLocalFilters();
                 },
               ),
               const SizedBox(width: 8),
@@ -510,7 +501,7 @@ class _MountainListScreenState extends State<MountainListScreen> {
                 icon: Icons.water_drop_outlined,
                 onTap: () {
                   setState(() => _sumberAir = _sumberAir == false ? null : false);
-                  _applyFilters();
+                  _applyLocalFilters();
                 },
               ),
             ],

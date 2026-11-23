@@ -18,14 +18,15 @@ import '../../models/medical_profile.dart';
 import '../../models/user_personal_data.dart';
 import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
-import '../../services/sync_service.dart';
+
+import 'package:get/get.dart';
+
 import '../../services/weather_service.dart';
 import '../../utils/date_utils.dart';
 import '../../utils/image_helper.dart';
 import '../mountain/mountain_list_screen.dart';
 import '../simaksi/simaksi_ticket_screen.dart';
 import '../profile/profile_screen.dart';
-import '../feedback/course_feedback_screen.dart';
 import '../../widgets/ticket_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -49,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       const MountainListScreen(embedded: true),
       const SimaksiTicketScreen(embedded: true),
-      const CourseFeedbackScreen(embedded: true),
       const ProfileScreen(embedded: true),
     ];
   }
@@ -60,9 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppTheme.background,
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: _buildAuraBottomBar(),
-      floatingActionButton: _currentIndex == 0
-          ? const _AnimatedTbotBubble()
-          : null,
+      floatingActionButton: null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
@@ -108,12 +106,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             _buildNavItem(
               index: 3,
-              icon: Icons.rate_review_outlined,
-              activeIcon: Icons.rate_review_rounded,
-              label: 'Saran',
-            ),
-            _buildNavItem(
-              index: 4,
               icon: Icons.person_outline_rounded,
               activeIcon: Icons.person_rounded,
               label: 'Profil',
@@ -207,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           OutlinedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Get.back(),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppTheme.border, width: 1),
               shape: const StadiumBorder(),
@@ -224,9 +216,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ElevatedButton(
             onPressed: () async {
               await AuthService.instance.logout();
-              if (!context.mounted) return;
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, AppRoutes.login);
+              Get.back();
+              Get.offAllNamed(AppRoutes.login);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.error,
@@ -355,7 +346,8 @@ class _DashboardPageState extends State<_DashboardPage> {
   }
 
   Future<void> _checkConnection() async {
-    final online = await SyncService.instance.hasConnection();
+    final result = await Connectivity().checkConnectivity();
+    final online = !result.contains(ConnectivityResult.none);
     if (mounted && _isOnline != online) setState(() => _isOnline = online);
   }
 
@@ -389,54 +381,22 @@ class _DashboardPageState extends State<_DashboardPage> {
     }
   }
 
-  /// Pull-to-refresh: Sinkron otomatis data, perbarui cuaca, status koneksi, tiket & gunung
+  /// Pull-to-refresh: Perbarui cuaca, koneksi, tiket & gunung lokal
   Future<void> _onRefresh() async {
-    // 1. Eksekusi Sinkronisasi Data Otomatis
-    final syncResult = await SyncService.instance.syncAll();
-
-    // 2. Refresh Cuaca & Koneksi
     await Future.wait([_fetchWeather(), _checkConnection()]);
-
-    // 3. Refresh Daftar Tiket, Gunung, & Rekomendasi TimurLang
     if (mounted) {
       setState(() {
         _permitsFuture = _getRecentPermits();
         _mountainsFuture = _loadMountainsWithCache();
       });
       _loadSmartRecommendations();
-
-      final isSuccess = syncResult.failed == 0;
-      // Tampilkan feedback notifikasi sinkronisasi
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                isSuccess
-                    ? Icons.cloud_done_rounded
-                    : Icons.info_outline_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  syncResult.message,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: isSuccess ? AppTheme.primary : AppTheme.warning,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          duration: const Duration(seconds: 3),
-        ),
+      Get.snackbar(
+        'Data Diperbarui',
+        'Data gunung & perizinan lokal telah diperbarui.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppTheme.primary,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
       );
     }
   }
@@ -467,7 +427,7 @@ class _DashboardPageState extends State<_DashboardPage> {
                 children: [
                   // Foto Profil Pengguna
                   GestureDetector(
-                    onTap: () => widget.onTabChange?.call(4),
+                    onTap: () => widget.onTabChange?.call(3),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -613,8 +573,7 @@ class _DashboardPageState extends State<_DashboardPage> {
                   onSubmitted: (value) {
                     if (_searchResults.length == 1) {
                       _searchFocus.unfocus();
-                      Navigator.pushNamed(
-                        context,
+                      Get.toNamed(
                         AppRoutes.mountainDetail,
                         arguments: _searchResults.first,
                       );
@@ -990,19 +949,19 @@ class _DashboardPageState extends State<_DashboardPage> {
             _buildSopItem(
               icon: Icons.contact_phone_rounded,
               title: 'Bantuan Darurat & SAR (24 Jam)',
-              desc: 'Jika membutuhkan bantuan medis atau evakuasi mendesak, aktifkan fitur SOS di aplikasi.',
+              desc: 'Jika membutuhkan bantuan medis atau evakuasi mendesak, hubungi nomor kontak darurat pos pengelola.',
             ),
             const SizedBox(height: 12),
             _buildSopItem(
-              icon: Icons.smart_toy_rounded,
-              title: 'Konsultasi 24 Jam dengan Tbot',
-              desc: 'Tbot selalu aktif untuk menjawab rute, cuaca, tips survival, atau panduan pertolongan pertama (P3K).',
+              icon: Icons.cloud_outlined,
+              title: 'Prakiraan Cuaca & Jalur',
+              desc: 'Pantau menu Cuaca secara berkala sebelum melakukan summit attack atau pendakian.',
             ),
             const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
+                onPressed: () => Get.back(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
@@ -1193,8 +1152,7 @@ class _DashboardPageState extends State<_DashboardPage> {
                 return InkWell(
                   onTap: () {
                     _searchFocus.unfocus();
-                    Navigator.pushNamed(
-                      context,
+                    Get.toNamed(
                       AppRoutes.mountainDetail,
                       arguments: mountain,
                     );
@@ -1457,8 +1415,7 @@ class _DashboardPageState extends State<_DashboardPage> {
     final isClosed = mountain.statusJalur == 'Tutup';
 
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(
-        context,
+      onTap: () => Get.toNamed(
         AppRoutes.mountainDetail,
         arguments: mountain,
       ),
@@ -1615,8 +1572,7 @@ class _DashboardPageState extends State<_DashboardPage> {
                         // Tombol CTA "Mulai"
                         ElevatedButton(
                           onPressed: () {
-                            Navigator.pushNamed(
-                              context,
+                            Get.toNamed(
                               AppRoutes.mountainDetail,
                               arguments: mountain,
                             );
@@ -1686,30 +1642,23 @@ class _DashboardPageState extends State<_DashboardPage> {
         ),
         const SizedBox(height: 12),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildCompactMenuItem(
               label: 'Peta\nOffline',
               icon: Icons.map_outlined,
-              onTap: () => Navigator.pushNamed(context, AppRoutes.map),
+              onTap: () => Get.toNamed(AppRoutes.map),
             ),
             _buildCompactMenuItem(
               label: 'Kompas',
               icon: Icons.explore_outlined,
-              onTap: () => Navigator.pushNamed(context, AppRoutes.compass),
+              onTap: () => Get.toNamed(AppRoutes.compass),
             ),
             _buildCompactMenuItem(
-              label: 'SOS',
-              icon: Icons.sos_rounded,
-              onTap: () =>
-                  Navigator.pushNamed(context, AppRoutes.fallDetection),
-            ),
-            _buildCompactMenuItem(
-              label: 'Games',
-              icon: Icons.sports_esports_outlined,
-              onTap: () =>
-                  Navigator.pushNamed(context, AppRoutes.mountainClimber),
+              label: 'Cuaca',
+              icon: Icons.cloud_outlined,
+              onTap: () => Get.toNamed(AppRoutes.weather),
             ),
           ],
         ),
@@ -1797,7 +1746,7 @@ class _DashboardPageState extends State<_DashboardPage> {
   /// Dedicated Aura Weather Card Widget
   Widget _buildWeatherCardWidget() {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, AppRoutes.weather),
+      onTap: () => Get.toNamed(AppRoutes.weather),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(18),
@@ -2335,7 +2284,7 @@ class _DashboardPageState extends State<_DashboardPage> {
                       color: AppTheme.textSecondary,
                       size: 20,
                     ),
-                    onPressed: () => Navigator.pop(ctx),
+                    onPressed: () => Get.back(),
                   ),
                 ],
               ),
@@ -2739,8 +2688,7 @@ class _SmartRecommendationCarouselState
         const AssetImage('assets/images/background_mount.png') as ImageProvider;
 
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(
-        context,
+      onTap: () => Get.toNamed(
         AppRoutes.mountainDetail,
         arguments: rec.mountain,
       ),
@@ -2938,8 +2886,7 @@ class _SmartRecommendationCarouselState
                       width: double.infinity,
                       height: 40,
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pushNamed(
-                          context,
+                        onPressed: () => Get.toNamed(
                           AppRoutes.mountainDetail,
                           arguments: rec.mountain,
                         ),
@@ -2980,154 +2927,5 @@ class _SmartRecommendationCarouselState
         ),
       ),
     );
-  }
-}
-
-/// Gelembung Obrolan AI Berkilau (Shimmering Sparkling Gradient) dengan Ekor Segitiga & Posisi Diam
-class _AnimatedTbotBubble extends StatefulWidget {
-  const _AnimatedTbotBubble();
-
-  @override
-  State<_AnimatedTbotBubble> createState() => _AnimatedTbotBubbleState();
-}
-
-class _AnimatedTbotBubbleState extends State<_AnimatedTbotBubble>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _shimmerController;
-
-  @override
-  void initState() {
-    super.initState();
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3200),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _shimmerController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const double size = 56.0;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6, right: 6),
-      child: Hero(
-        tag: 'ai_survival_fab',
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () =>
-                Navigator.pushNamed(context, AppRoutes.survivalAssistant),
-            customBorder: const CircleBorder(),
-            splashColor: Colors.white.withValues(alpha: 0.25),
-            highlightColor: Colors.transparent,
-            child: SizedBox(
-              width: size,
-              height: size,
-              child: AnimatedBuilder(
-                animation: _shimmerController,
-                builder: (context, child) {
-                  return CustomPaint(
-                    painter: _SparklingSpeechBubblePainter(
-                      shimmerProgress: _shimmerController.value,
-                    ),
-                    child: child,
-                  );
-                },
-                child: const Center(
-                  child: Padding(
-                    padding: EdgeInsets.only(right: 2, bottom: 2),
-                    child: Icon(
-                      Icons.auto_awesome_rounded,
-                      color: Colors.white,
-                      size: 26,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SparklingSpeechBubblePainter extends CustomPainter {
-  final double shimmerProgress;
-
-  _SparklingSpeechBubblePainter({required this.shimmerProgress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const double cx = 25.5;
-    const double cy = 25.5;
-    const double r = 23.5;
-
-    final circle = Path()
-      ..addOval(Rect.fromCircle(center: const Offset(cx, cy), radius: r));
-
-    final tail = Path()
-      ..moveTo(35.5, 45.5)
-      ..quadraticBezierTo(43.5, 46.5, 48.5, 48.5)
-      ..quadraticBezierTo(46.5, 43.5, 45.5, 35.5)
-      ..close();
-
-    final bubblePath = Path.combine(PathOperation.union, circle, tail);
-
-    canvas.drawShadow(
-      bubblePath,
-      Colors.black.withValues(alpha: 0.28),
-      7,
-      true,
-    );
-
-    final double shimmerPos = -1.2 + shimmerProgress * 3.4;
-    final gradient = LinearGradient(
-      begin: Alignment(shimmerPos - 0.85, -1.0),
-      end: Alignment(shimmerPos + 0.85, 1.0),
-      colors: const [
-        Color(0xFF047857),
-        Color(0xFF059669),
-        Color(0xFF10B981),
-        Color(0xFF34D399),
-        Color(0xFFD1FAE5),
-        Color(0xFF34D399),
-        Color(0xFF10B981),
-        Color(0xFF059669),
-        Color(0xFF047857),
-      ],
-      stops: const [0.0, 0.22, 0.38, 0.46, 0.50, 0.54, 0.62, 0.78, 1.0],
-    );
-
-    final fillPaint = Paint()
-      ..shader = gradient.createShader(Offset.zero & size)
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(bubblePath, fillPaint);
-
-    final strokePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..strokeJoin = StrokeJoin.round
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPath(bubblePath, strokePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SparklingSpeechBubblePainter oldDelegate) {
-    return oldDelegate.shimmerProgress != shimmerProgress;
   }
 }
