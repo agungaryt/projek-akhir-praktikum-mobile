@@ -1,13 +1,37 @@
 // ============================================================================
-// 💾 [KODINGAN DATABASE LOKAL - SQLITE (OFFLINE-FIRST)]
+// 💾 [MODUL VI - DATABASE LOKAL (SQLITE OFFLINE-FIRST STORAGE)]
 // ----------------------------------------------------------------------------
-// File: database_service.dart
-// Penjelasan:
-// - Menggunakan package 'sqflite' & 'sqflite_common_ffi_web' (Modul VI Local Storage)
-// - Berfungsi sebagai penyimpanan basis data lokal (SQLite) pada perangkat
-// - Menyimpan tabel: users, mountains, simaksi_permits, user_personal_data,
-//   medical_profiles
-// - Mendukung operasi CRUD lokal penuh
+// 📍 LETAK CODINGAN DATABASE LOKAL:
+//    File: lib/services/database_service.dart
+//    Nama File Database Fisik di HP: 'timurlang.db' (didefinisikan di AppConstants.dbName)
+//
+// 🔌 CARA MENGHUBUNGKAN / INISIALISASINYA:
+//    1. Singleton Pattern:
+//       Menggunakan 'DatabaseService.instance' agar hanya ada 1 koneksi database
+//       yang aktif di seluruh aplikasi (mencegah memory leak & lock database).
+//    2. Jalur Penyimpanan (Path):
+//       Memanggil 'getDatabasesPath()' untuk mendapatkan direktori database aman
+//       bawaan Android/iOS, lalu digabungkan menjadi: path/timurlang.db
+//    3. Pembukaan Database (openDatabase):
+//       Membuka file SQLite dengan 'openDatabase(path, version: 8, onCreate: _onCreate)'.
+//    4. Pembuatan Tabel Pertama Kali (_onCreate):
+//       Jika database baru dibuat, fungsi '_onCreate' otomatis dieksekusi untuk
+//       menjalankan query 'CREATE TABLE' untuk 5 tabel utama:
+//       - 'users'             : Akun pendaki (nama, email, password hash SHA-256)
+//       - 'mountains'         : Master data gunung (offline cache 50 gunung)
+//       - 'simaksi_permits'   : Tiket/Izin pendakian yang dipesan user
+//       - 'user_personal_data': Data identitas KTP & domisili pendaki
+//       - 'medical_profiles'  : Data rekam medis, golongan darah, kontak darurat
+//    5. Inisialisasi Data Awal (Seeding):
+//       Method '_seedMountains' otomatis mengisi 50 data gunung awal ke tabel
+//       'mountains' saat pertama kali aplikasi di-install.
+//
+// 🎯 CARA PENGGUNAAN DI CONTROLLER / SCREEN LAIN:
+//    final _db = DatabaseService.instance;
+//    await _db.getAllMountains(); // Read
+//    await _db.insertSimaksiPermit(permit); // Create
+//    await _db.updatePermitStatus(id, status); // Update
+//    await _db.deletePermit(id); // Delete
 // ============================================================================
 
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
@@ -24,32 +48,53 @@ import '../models/user_personal_data.dart';
 import '../models/medical_profile.dart';
 
 class DatabaseService {
+  // Variabel penampung instance database SQLite di memori
   static Database? _database;
+
+  // --------------------------------------------------------------------------
+  // 🔌 1. SINGLETON PATTERN: Menjamin hanya ada 1 instance DatabaseService
+  // --------------------------------------------------------------------------
   static final DatabaseService instance = DatabaseService._internal();
 
+  // Konstruktor private agar kelas tidak bisa di-instansiasi sembarangan (harus lewat .instance)
   DatabaseService._internal();
 
+  /// Khusus platform Web: menggunakan ffi web database factory
   static void initForWeb() {
     if (kIsWeb) {
       databaseFactory = databaseFactoryFfiWebNoWebWorker;
     }
   }
 
+  // --------------------------------------------------------------------------
+  // 🔌 2. GETTER DATABASE (LAZY INITIALIZATION):
+  //    Jika database sudah terbuka, langsung kembalikan.
+  //    Jika belum terbuka, panggil _initDatabase() untuk membuka koneksi.
+  // --------------------------------------------------------------------------
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDatabase();
     return _database!;
   }
 
+  // --------------------------------------------------------------------------
+  // 🔌 3. METODE INISIALISASI DATABASE & PEMBUKAAN FILE SQLITE
+  //    - Mengambil lokasi direktori penyimpanan lokal (getDatabasesPath)
+  //    - Menggabungkan path dengan nama database 'timurlang.db'
+  //    - Membuka database dengan openDatabase()
+  // --------------------------------------------------------------------------
   Future<Database> _initDatabase() async {
     final String path;
     if (kIsWeb) {
       path = AppConstants.dbName;
     } else {
+      // Mengambil direktori folder database bawaan OS (Android/iOS)
       final dbPath = await getDatabasesPath();
+      // Menggabungkan folder dengan nama file: /data/user/0/.../databases/timurlang.db
       path = join(dbPath, AppConstants.dbName);
     }
 
+    // Membuka database dengan parameter: path, version, dan callback onCreate/onUpgrade
     final db = await openDatabase(
       path,
       version: 8,
@@ -57,7 +102,7 @@ class DatabaseService {
       onUpgrade: _onUpgrade,
     );
 
-    // Pastikan data awal gunung terisi
+    // Pastikan data awal gunung terisi (Seeding)
     try {
       final count =
           Sqflite.firstIntValue(
@@ -72,8 +117,14 @@ class DatabaseService {
     return db;
   }
 
+  // --------------------------------------------------------------------------
+  // 🔌 4. CALLBACK _onCreate: DIJALANKAN OTOMATIS SAAT DATABASE BARU DIBUAT
+  //    Mengeksekusi DDL (CREATE TABLE) untuk 5 tabel SQLite aplikasi.
+  // --------------------------------------------------------------------------
   Future<void> _onCreate(Database db, int version) async {
-    // 1. Tabel users
+    // ------------------------------------------------------------------------
+    // TABEL 1: users (Penyimpanan Akun Pengguna / Pendaki)
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE users (
         id TEXT PRIMARY KEY,
@@ -86,7 +137,9 @@ class DatabaseService {
       )
     ''');
 
-    // 2. Tabel mountains
+    // ------------------------------------------------------------------------
+    // TABEL 2: mountains (Master Data 50 Gunung & Offline Caching API)
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE mountains (
         id TEXT PRIMARY KEY,
@@ -104,7 +157,9 @@ class DatabaseService {
       )
     ''');
 
-    // 3. Tabel simaksi_permits
+    // ------------------------------------------------------------------------
+    // TABEL 3: simaksi_permits (Penyimpanan Tiket & Izin Pendakian)
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE simaksi_permits (
         id TEXT PRIMARY KEY,
@@ -132,7 +187,9 @@ class DatabaseService {
       )
     ''');
 
-    // 4. Tabel user_personal_data
+    // ------------------------------------------------------------------------
+    // TABEL 4: user_personal_data (Data Identitas KTP & Domisili Pendaki)
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE user_personal_data (
         id TEXT PRIMARY KEY,
@@ -160,7 +217,9 @@ class DatabaseService {
       )
     ''');
 
-    // 5. Tabel medical_profiles
+    // ------------------------------------------------------------------------
+    // TABEL 5: medical_profiles (Data Rekam Medis & Kontak Darurat Pendaki)
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE medical_profiles (
         id TEXT PRIMARY KEY,
@@ -175,7 +234,7 @@ class DatabaseService {
       )
     ''');
 
-    // Seed master data gunung
+    // Seed master data gunung agar database langsung terisi 50 gunung
     await _seedMountains(db);
   }
 
@@ -210,6 +269,11 @@ class DatabaseService {
     } catch (_) {}
   }
 
+  // --------------------------------------------------------------------------
+  // 🔌 5. INITIAL SEEDING: Mengisi Data Master Awal ke Tabel 'mountains'
+  //    Dijalankan saat database pertama kali di-create, memastikan 50 gunung
+  //    tersimpan di SQLite lokal sehingga aplikasi langsung bisa dipakai offline.
+  // --------------------------------------------------------------------------
   Future<void> _seedMountains(Database db) async {
     final batch = db.batch();
     for (final mountainData in SeedData.initialMountains) {
@@ -226,8 +290,10 @@ class DatabaseService {
   }
 
   // ==========================================================================
-  // 👤 CRUD USER
+  // 👤 [OPERASI CRUD 1] - TABEL USERS (Autentikasi & Akun Pendaki)
   // ==========================================================================
+
+  /// [C - CREATE / INSERT]: Menyimpan akun pendaki baru ke tabel 'users'
   Future<int> insertUser(User user) async {
     final db = await database;
     return await db.insert(
@@ -237,6 +303,7 @@ class DatabaseService {
     );
   }
 
+  /// [R - READ / QUERY]: Mengambil data akun berdasarkan ID (Primary Key)
   Future<User?> getUserById(String id) async {
     final db = await database;
     final results = await db.query(
@@ -249,6 +316,7 @@ class DatabaseService {
     return User.fromMap(results.first);
   }
 
+  /// [R - READ / QUERY]: Mengambil data akun berdasarkan Email (untuk proses Login)
   Future<User?> getUserByEmail(String email) async {
     final db = await database;
     final results = await db.query(
@@ -261,6 +329,7 @@ class DatabaseService {
     return User.fromMap(results.first);
   }
 
+  /// [U - UPDATE]: Memperbarui profil akun pendaki
   Future<int> updateUser(User user) async {
     final db = await database;
     return await db.update(
@@ -271,20 +340,24 @@ class DatabaseService {
     );
   }
 
+  /// [D - DELETE]: Menghapus akun user dari tabel 'users'
   Future<int> deleteUser(String id) async {
     final db = await database;
     return await db.delete('users', where: 'id = ?', whereArgs: [id]);
   }
 
   // ==========================================================================
-  // 🏔️ CRUD MOUNTAINS (Data Gunung)
+  // 🏔️ [OPERASI CRUD 2] - TABEL MOUNTAINS (Katalog & Offline Cache Data Gunung)
   // ==========================================================================
+
+  /// [R - READ ALL]: Mengambil seluruh 50 data gunung dari SQLite lokal (A-Z)
   Future<List<Mountain>> getAllMountains() async {
     final db = await database;
     final results = await db.query('mountains', orderBy: 'nama_gunung ASC');
     return results.map((map) => Mountain.fromMap(map)).toList();
   }
 
+  /// [R - READ SINGLE]: Mengambil detail 1 gunung berdasarkan ID
   Future<Mountain?> getMountainById(String id) async {
     final db = await database;
     final results = await db.query(
@@ -297,6 +370,7 @@ class DatabaseService {
     return Mountain.fromMap(results.first);
   }
 
+  /// [C - CREATE / INSERT]: Menyimpan 1 data gunung ke SQLite
   Future<int> insertMountain(Mountain mountain) async {
     final db = await database;
     return await db.insert(
@@ -306,6 +380,8 @@ class DatabaseService {
     );
   }
 
+  /// [C/U - UPSERT BATCH]: Sinkronisasi data dari REST API ke SQLite (Offline Caching)
+  /// Menggunakan batch.insert dengan replace jika data sudah ada
   Future<void> upsertMountains(List<Mountain> list) async {
     final db = await database;
     final batch = db.batch();
@@ -319,6 +395,7 @@ class DatabaseService {
     await batch.commit(noResult: true);
   }
 
+  /// [R - SEARCH]: Mencari gunung menggunakan query LIKE pada SQLite
   Future<List<Mountain>> searchMountains(String query) async {
     final db = await database;
     final q = '%$query%';
@@ -332,8 +409,10 @@ class DatabaseService {
   }
 
   // ==========================================================================
-  // 🎫 CRUD SIMAKSI PERMITS
+  // 🎫 [OPERASI CRUD 3] - TABEL SIMAKSI PERMITS (Tiket / Perizinan Pendakian)
   // ==========================================================================
+
+  /// [C - CREATE / INSERT]: Menyimpan tiket izin pendakian baru ke SQLite
   Future<int> insertSimaksiPermit(SimaksiPermit permit) async {
     final db = await database;
     return await db.insert(
@@ -343,6 +422,8 @@ class DatabaseService {
     );
   }
 
+  /// [R - READ WITH JOIN]: Mengambil riwayat izin SIMAKSI milik pengguna tertentu
+  /// Menggunakan query JOIN ke tabel mountains untuk mendapatkan nama gunung terkini
   Future<List<SimaksiPermit>> getPermitsByUserId(String userId) async {
     final db = await database;
     final results = await db.rawQuery(
@@ -366,6 +447,7 @@ class DatabaseService {
     }).toList();
   }
 
+  /// [R - READ SINGLE]: Mengambil detail 1 izin SIMAKSI berdasarkan ID tiket
   Future<SimaksiPermit?> getPermitById(String id) async {
     final db = await database;
     final results = await db.rawQuery(
@@ -387,6 +469,7 @@ class DatabaseService {
     return SimaksiPermit.fromMap(mutable);
   }
 
+  /// [R - READ BY HASH / QR]: Mengambil tiket SIMAKSI untuk scanning QR Code di pos pendakian
   Future<SimaksiPermit?> getPermitByHash(String hash) async {
     final db = await database;
     final results = await db.rawQuery(
@@ -408,6 +491,7 @@ class DatabaseService {
     return SimaksiPermit.fromMap(mutable);
   }
 
+  /// [U - UPDATE STATUS]: Memperbarui status izin tiket di SQLite (misal: 'Aktif', 'Selesai')
   Future<int> updatePermitStatus(String id, String status) async {
     final db = await database;
     return await db.update(
@@ -418,6 +502,7 @@ class DatabaseService {
     );
   }
 
+  /// [U - UPDATE CANCELLATION]: Memperbarui data pembatalan / pengajuan refund tiket di SQLite
   Future<int> updatePermitCancellation({
     required String id,
     required String opsi,
@@ -438,14 +523,17 @@ class DatabaseService {
     );
   }
 
+  /// [D - DELETE]: Menghapus tiket SIMAKSI dari database SQLite
   Future<int> deletePermit(String id) async {
     final db = await database;
     return await db.delete('simaksi_permits', where: 'id = ?', whereArgs: [id]);
   }
 
   // ==========================================================================
-  // 📋 CRUD USER PERSONAL DATA
+  // 📋 [OPERASI CRUD 4] - TABEL USER PERSONAL DATA (Identitas KTP & Domisili)
   // ==========================================================================
+
+  /// [R - READ]: Mengambil profil data diri pendaki berdasarkan user_id
   Future<UserPersonalData?> getPersonalDataByUserId(String userId) async {
     final db = await database;
     final results = await db.query(
@@ -458,6 +546,7 @@ class DatabaseService {
     return UserPersonalData.fromMap(results.first);
   }
 
+  /// [C/U - CREATE / UPDATE]: Menyimpan data diri pendaki (Insert atau Replace)
   Future<int> savePersonalData(UserPersonalData data) async {
     final db = await database;
     return await db.insert(
@@ -467,6 +556,7 @@ class DatabaseService {
     );
   }
 
+  /// [D - DELETE]: Menghapus data pribadi pendaki
   Future<int> deletePersonalData(String userId) async {
     final db = await database;
     return await db.delete(
@@ -477,8 +567,10 @@ class DatabaseService {
   }
 
   // ==========================================================================
-  // 🩺 CRUD MEDICAL PROFILES
+  // 🩺 [OPERASI CRUD 5] - TABEL MEDICAL PROFILES (Rekam Medis & Kontak Darurat)
   // ==========================================================================
+
+  /// [R - READ]: Mengambil data kesehatan pendaki berdasarkan user_id
   Future<MedicalProfile?> getMedicalProfileByUserId(String userId) async {
     final db = await database;
     final results = await db.query(
@@ -491,6 +583,7 @@ class DatabaseService {
     return MedicalProfile.fromMap(results.first);
   }
 
+  /// [C/U - CREATE / UPDATE]: Menyimpan profil medis & kontak darurat (Insert / Replace)
   Future<int> saveMedicalProfile(MedicalProfile profile) async {
     final db = await database;
     return await db.insert(

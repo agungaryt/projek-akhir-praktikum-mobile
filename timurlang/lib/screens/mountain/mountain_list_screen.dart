@@ -115,7 +115,8 @@ class _MountainListScreenState extends State<MountainListScreen> {
                   ),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: AppTheme.surface,
+                    // 🎨 [1. GANTI WARNA KOLOM PENCARIAN GUNUNG]:
+                    fillColor: AppTheme.surface, // 👈 UBAH WARNA BACKGROUND KOLOM CARI (Contoh: Colors.white)
                     hintText: 'Cari nama gunung...',
                     hintStyle: GoogleFonts.plusJakartaSans(
                       color: AppTheme.textSecondary.withValues(alpha: 0.7),
@@ -127,13 +128,14 @@ class _MountainListScreenState extends State<MountainListScreen> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppTheme.border, width: 1.2),
+                      borderSide: const BorderSide(color: AppTheme.border, width: 1.2), // 👈 BORDER CARI
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                      borderSide: const BorderSide(color: AppTheme.primary, width: 1.5), // 👈 BORDER FOKUS CARI
                     ),
-                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppTheme.primary),
+                    // 🎨 [2. GANTI WARNA IKON KACA PEMBESAR / SEARCH]:
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppTheme.primary), // 👈 UBAH WARNA IKON CARI
                     suffixIcon: GestureDetector(
                       onTap: () => setState(() => _showFilters = !_showFilters),
                       child: Container(
@@ -150,10 +152,11 @@ class _MountainListScreenState extends State<MountainListScreen> {
                                 : AppTheme.border,
                           ),
                         ),
+                        // 🎨 [3. GANTI WARNA IKON FILTER]:
                         child: Icon(
                           Icons.tune_rounded,
                           size: 18,
-                          color: _showFilters ? AppTheme.primary : AppTheme.textSecondary,
+                          color: _showFilters ? AppTheme.primary : AppTheme.textSecondary, // 👈 UBAH WARNA IKON FILTER
                         ),
                       ),
                     ),

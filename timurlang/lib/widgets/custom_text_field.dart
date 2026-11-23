@@ -65,15 +65,17 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
             decoration: InputDecoration(
               filled: true,
-              fillColor: widget.fillColor ?? AppTheme.surface,
+              // 🎨 [1. GANTI WARNA BACKGROUND KOLOM INPUT]:
+              fillColor: widget.fillColor ?? AppTheme.surface, // 👈 UBAH WARNA BACKGROUND INPUT
               labelText: widget.label,
               labelStyle: GoogleFonts.plusJakartaSans(
                 color: AppTheme.textSecondary,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
+              // 🎨 [2. GANTI WARNA LABEL INPUT SAAT DIKLIK/FOKUS]:
               floatingLabelStyle: GoogleFonts.plusJakartaSans(
-                color: AppTheme.primary,
+                color: AppTheme.primary, // 👈 UBAH WARNA LABEL FOKUS (Contoh: Colors.blue)
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -92,13 +94,15 @@ class _CustomTextFieldState extends State<CustomTextField> {
                 borderRadius: BorderRadius.circular(widget.borderRadius),
                 borderSide: const BorderSide(color: AppTheme.border, width: 1.2),
               ),
+              // 🎨 [3. GANTI WARNA BORDER NORMAL INPUT]:
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(widget.borderRadius),
-                borderSide: const BorderSide(color: AppTheme.border, width: 1.2),
+                borderSide: const BorderSide(color: AppTheme.border, width: 1.2), // 👈 BORDER NORMAL
               ),
+              // 🎨 [4. GANTI WARNA BORDER SAAT DIKLIK/FOKUS]:
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(widget.borderRadius),
-                borderSide: const BorderSide(color: AppTheme.primary, width: 1.8),
+                borderSide: const BorderSide(color: AppTheme.primary, width: 1.8), // 👈 BORDER FOKUS
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -113,11 +117,12 @@ class _CustomTextFieldState extends State<CustomTextField> {
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
+              // 🎨 [5. GANTI WARNA IKON DI DALAM KOLOM INPUT]:
               prefixIcon: widget.prefixIcon != null
                   ? Icon(
                       widget.prefixIcon,
                       size: 20,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.textSecondary, // 👈 UBAH WARNA IKON INPUT
                     )
                   : null,
               suffixIcon: widget.isPassword

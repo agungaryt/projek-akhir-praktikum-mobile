@@ -17,6 +17,10 @@ import '../controllers/auth_controller.dart';
 class SimaksiController extends GetxController {
   static SimaksiController get to => Get.find<SimaksiController>();
 
+  // --------------------------------------------------------------------------
+  // 🔌 CARA MENGHUBUNGKAN KE DATABASE LOKAL (SQLITE):
+  // Mengambil singleton instance DatabaseService yang mengelola file 'timurlang.db'
+  // --------------------------------------------------------------------------
   final _db = DatabaseService.instance;
 
   final RxList<SimaksiPermit> permits = <SimaksiPermit>[].obs;
@@ -32,7 +36,8 @@ class SimaksiController extends GetxController {
     }
   }
 
-  /// Memuat daftar tiket SIMAKSI milik user dari SQLite lokal (Modul VI)
+  /// [READ]: Memuat daftar tiket SIMAKSI milik user dari SQLite lokal (Modul VI)
+  /// Memanggil _db.getPermitsByUserId() yang menjalankan rawQuery JOIN ke tabel mountains
   Future<void> loadUserPermits(String userId) async {
     isLoading.value = true;
     try {
@@ -43,7 +48,8 @@ class SimaksiController extends GetxController {
     }
   }
 
-  /// Membuat izin SIMAKSI baru dan menyimpan ke SQLite lokal (Modul VI)
+  /// [CREATE]: Membuat izin SIMAKSI baru dan menyimpan ke SQLite lokal (Modul VI)
+  /// Memanggil _db.insertSimaksiPermit() untuk menyimpan tiket ke tabel simaksi_permits
   Future<SimaksiPermit?> createPermit({
     required Mountain mountain,
     required DateTime tanggalNaik,

@@ -15,6 +15,11 @@ import '../controllers/auth_controller.dart';
 class ProfileController extends GetxController {
   static ProfileController get to => Get.find<ProfileController>();
 
+  // --------------------------------------------------------------------------
+  // 🔌 CARA MENGHUBUNGKAN KE DATABASE LOKAL (SQLITE):
+  // Mengambil singleton instance DatabaseService untuk mengelola tabel
+  // 'user_personal_data' dan 'medical_profiles'
+  // --------------------------------------------------------------------------
   final _db = DatabaseService.instance;
 
   final Rx<UserPersonalData?> personalData = Rx<UserPersonalData?>(null);
@@ -30,6 +35,7 @@ class ProfileController extends GetxController {
     }
   }
 
+  /// [READ]: Memuat profil identitas KTP dan data medis dari SQLite
   Future<void> loadProfileData(String userId) async {
     isLoading.value = true;
     try {
@@ -42,6 +48,7 @@ class ProfileController extends GetxController {
     }
   }
 
+  /// [CREATE / UPDATE]: Menyimpan data identitas KTP & domisili ke SQLite
   Future<bool> savePersonalData(UserPersonalData data) async {
     isLoading.value = true;
     try {

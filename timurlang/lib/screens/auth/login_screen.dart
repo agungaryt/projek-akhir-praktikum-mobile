@@ -65,7 +65,17 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      // ============================================================================
+      // 🎨 [1. GANTI WARNA BACKGROUND HALAMAN LOGIN DI SINI]
+      // ----------------------------------------------------------------------------
+      // 👉 Ganti `AppTheme.background` di bawah ini jika penguji minta ganti warna background!
+      // Contoh pilihan warna cepat:
+      //   - Colors.white            (Putih bersih)
+      //   - Colors.blue.shade50     (Biru sangat muda)
+      //   - Colors.amber.shade50    (Kuning gading muda)
+      //   - const Color(0xFF1E293B) (Dark mode / gelap elegan)
+      // ============================================================================
+      backgroundColor: AppTheme.background, // 👈 UBAH WARNA BACKGROUND LOGIN DI SINI
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -75,15 +85,20 @@ class _LoginScreenState extends State<LoginScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo Card
+                  // ====================================================================
+                  // 🎨 [2. GANTI WARNA KOTAK LOGO / ICON LOGIN DI SINI]
+                  // --------------------------------------------------------------------
+                  // 👉 Ganti `color: AppTheme.surface` (background kotak)
+                  // 👉 Ganti `color: AppTheme.border` (garis tepi border kotak)
+                  // ====================================================================
                   Container(
                     width: 84,
                     height: 84,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: AppTheme.surface, // 👈 UBAH WARNA BACKGROUND KOTAK LOGO
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: AppTheme.border, width: 1.2),
+                      border: Border.all(color: AppTheme.border, width: 1.2), // 👈 UBAH BORDER KOTAK LOGO
                       boxShadow: [
                         BoxShadow(
                           color: AppTheme.textPrimary.withValues(alpha: 0.06),
@@ -95,43 +110,59 @@ class _LoginScreenState extends State<LoginScreen>
                     child: Image.asset(
                       'assets/images/logo_timurlang.png',
                       fit: BoxFit.contain,
+                      // ==============================================================
+                      // 🎨 [3. GANTI WARNA IKON LOGO LOGIN DI SINI]
+                      // --------------------------------------------------------------
+                      // 👉 Ganti `color: AppTheme.primary` di bawah (Contoh: Colors.blue, Colors.orange, Colors.red)
+                      // ==============================================================
                       errorBuilder: (context, error, stackTrace) => const Icon(
                         Icons.terrain_rounded,
                         size: 40,
-                        color: AppTheme.primary,
+                        color: AppTheme.primary, // 👈 UBAH WARNA IKON LOGO DI SINI
                       ),
                     ),
                   ),
                   const SizedBox(height: 18),
 
-                  // Brand Heading
+                  // ==================================================================
+                  // 🎨 [4. GANTI WARNA TEKS JUDUL "TimurLang"]
+                  // ==================================================================
                   Text(
                     'TimurLang',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.textPrimary, // 👈 UBAH WARNA JUDUL DI SINI (Contoh: Colors.blue, Colors.green)
                       letterSpacing: -0.4,
                     ),
                   ),
                   const SizedBox(height: 4),
+
+                  // ==================================================================
+                  // 🎨 [5. GANTI WARNA TEKS SUBJUDUL]
+                  // ==================================================================
                   Text(
                     'Masuk ke akun Anda untuk melanjutkan',
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.textSecondary, // 👈 UBAH WARNA SUBJUDUL DI SINI
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 28),
 
-                  // Card Form Container
+                  // ====================================================================
+                  // 🎨 [6. GANTI WARNA KARTU FORM CONTAINER DI SINI]
+                  // --------------------------------------------------------------------
+                  // 👉 Ganti `color: AppTheme.surface` (Contoh: Colors.white, Colors.grey.shade100)
+                  // 👉 Ganti `color: AppTheme.border` (Garis border kartu)
+                  // ====================================================================
                   Container(
                     padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: AppTheme.surface, // 👈 UBAH WARNA KARTU FORM DI SINI
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppTheme.border, width: 1.2),
+                      border: Border.all(color: AppTheme.border, width: 1.2), // 👈 UBAH BORDER KARTU
                       boxShadow: [
                         BoxShadow(
                           color: AppTheme.textPrimary.withValues(alpha: 0.05),
@@ -171,17 +202,20 @@ class _LoginScreenState extends State<LoginScreen>
                               SizedBox(
                                 height: 24,
                                 width: 24,
+                                // ====================================================
+                                // 🎨 [7. GANTI WARNA CHECKBOX "INGAT SAYA"]
+                                // ====================================================
                                 child: Checkbox(
                                   value: auth.rememberMe.value,
-                                  activeColor: AppTheme.primary,
-                                  checkColor: Colors.white,
+                                  activeColor: AppTheme.primary, // 👈 WARNA CHECKBOX AKTIF
+                                  checkColor: Colors.white, // 👈 WARNA CENTANG DI DALAM CHECKBOX
                                   materialTapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(5),
                                   ),
                                   side: const BorderSide(
-                                    color: AppTheme.border,
+                                    color: AppTheme.border, // 👈 WARNA BORDER CHECKBOX
                                     width: 1.5,
                                   ),
                                   onChanged: (val) {
@@ -197,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 child: Text(
                                   'Ingat Saya',
                                   style: GoogleFonts.plusJakartaSans(
-                                    color: AppTheme.textPrimary,
+                                    color: AppTheme.textPrimary, // 👈 WARNA TEKS INGAT SAYA
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -207,18 +241,27 @@ class _LoginScreenState extends State<LoginScreen>
                           )),
                           const SizedBox(height: 20),
 
-                          // Tombol Masuk
+                          // ==================================================================
+                          // 🎨 [8. GANTI WARNA TOMBOL "MASUK" DI SINI]
+                          // ------------------------------------------------------------------
+                          // 👉 Tombol ini menggunakan gradien LinearGradient:
+                          //    - Ganti `colors: [AppTheme.primary, AppTheme.secondary]`
+                          //    - Contoh Biru:   `colors: [Colors.blue, Colors.lightBlue]`
+                          //    - Contoh Merah:  `colors: [Colors.red, Colors.deepOrange]`
+                          //    - Contoh Oranye: `colors: [Colors.orange, Colors.amber]`
+                          //    - Contoh Solid:  `colors: [Colors.teal, Colors.teal]`
+                          // ==================================================================
                           Obx(() => Container(
                             width: double.infinity,
                             height: 50,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [AppTheme.primary, AppTheme.secondary],
+                                colors: [AppTheme.primary, AppTheme.secondary], // 👈 UBAH WARNA TOMBOL MASUK DI SINI
                               ),
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primary.withValues(alpha: 0.3),
+                                  color: AppTheme.primary.withValues(alpha: 0.3), // 👈 WARNA BAYANGAN TOMBOL
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -247,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.white,
+                                        color: Colors.white, // 👈 WARNA TEKS TOMBOL MASUK (Putih)
                                       ),
                                     ),
                             ),
@@ -258,14 +301,16 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                   const SizedBox(height: 24),
 
-                  // Link Register
+                  // ==================================================================
+                  // 🎨 [9. GANTI WARNA TEKS LINK "DAFTAR SEKARANG"]
+                  // ==================================================================
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         'Belum punya akun? ',
                         style: GoogleFonts.plusJakartaSans(
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.textSecondary, // 👈 WARNA TEKS "Belum punya akun?"
                           fontSize: 14,
                         ),
                       ),
@@ -274,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen>
                         child: Text(
                           'Daftar Sekarang',
                           style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.primary,
+                            color: AppTheme.primary, // 👈 UBAH WARNA TEKS LINK DAFTAR DI SINI (Contoh: Colors.blue)
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                           ),

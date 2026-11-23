@@ -30,9 +30,22 @@ void main() async {
     }
   }
 
-  // Pre-inisialisasi database lokal (SQLite - Modul VI)
+  // ============================================================================
+  // 💾 [MODUL VI - DATABASE LOKAL: INISIALISASI & KONEKSI SQLITE SAAT STARTUP]
+  // ----------------------------------------------------------------------------
+  // Lokasi File Service: lib/services/database_service.dart
+  // Nama Database: timurlang.db
+  // Cara Kerja Inisiasi:
+  // 1. Memanggil DatabaseService.instance.database (Singleton Pattern).
+  // 2. Baris ini mengecek apakah file database 'timurlang.db' sudah ada di storage HP.
+  // 3. Jika belum ada, openDatabase() akan otomatis mengeksekusi _onCreate()
+  //    untuk membuat seluruh tabel (users, mountains, simaksi_permits, dll)
+  //    dan mengisi 50 data awal gunung (_seedMountains).
+  // 4. Jika sudah ada, koneksi database langsung dibuka dan siap dipakai.
+  // ============================================================================
   try {
     await DatabaseService.instance.database;
+    debugPrint('✅ [SQLITE] Database lokal berhasil diinisialisasi & terkoneksi!');
   } catch (e) {
     debugPrint('⚠️ Error inisialisasi SQLite: $e');
   }

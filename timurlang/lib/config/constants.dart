@@ -16,15 +16,40 @@ class AppConstants {
   static const String userIdKey = 'user_id';
   static const String rememberMeKey = 'remember_me';
 
-  // API Config (Data Gunung REST API)
+  // ============================================================================
+  // 🔑 [PENJELASAN & KONFIGURASI API KEY - SESUAI MODUL V HTTP REQUEST]
+  // ----------------------------------------------------------------------------
+  // ❓ APA ITU API KEY?
+  // - API Key adalah token/string rahasia unik yang berfungsi sebagai "KTP digital"
+  //   atau tanda pengenal aplikasi client saat memanggil REST API server.
+  // - Sesuai Modul V (Halaman 9):
+  //   "Beberapa API membutuhkan API key untuk autentikasi, yakni sebuah token
+  //    khusus yang membuktikan bahwa penggunanya terdaftar dan berhak mengakses data."
+  //
+  // 📥 CARA MENGAMBIL / MENDAPATKAN API KEY:
+  // 1. API Publik / Pihak Ketiga (Contoh: Midtrans, OpenWeather, TMDb):
+  //    - Buka website dashboard provider (misal: dashboard.midtrans.com).
+  //    - Login / Register akun developer.
+  //    - Buka menu 'Settings' -> 'Access Keys' (Kunci Akses).
+  //    - Salin 'Server Key' (untuk backend/HTTP auth) atau 'Client Key' (untuk frontend).
+  // 2. Custom API Sendiri (Contoh: Mountain REST API Python di folder mountain_api):
+  //    - Dibuat sendiri sebagai token autentikasi rahasia bersama (Shared Secret Token).
+  //    - Client mengirim token via HTTP Header ('x-api-key'), dan server memvalidasinya.
+  // ============================================================================
+
+  // 1. API Config & API Key untuk Mountain REST API (Modul V)
   static const String apiBaseUrl = 'http://10.0.2.2:3000/api';
   static const String apiBaseUrlLocal = 'http://localhost:3000/api';
+  // API Key rahasia client untuk mengakses REST API Gunung
+  static const String mountainApiKey = 'timurlang_api_key_sec_2026';
 
-  // Midtrans Payment Gateway
+  // 2. Midtrans Payment Gateway API Keys
   static bool get midtransIsProduction =>
       midtransServerKey.startsWith('Mid-') &&
       !midtransServerKey.startsWith('SB-');
+  // Server Key (Digunakan di HTTP Header 'Authorization: Basic <base64>' untuk verifikasi transaksi)
   static const String midtransServerKey = 'SB-Mid-server-ggpA~I8KRa3j6U9d4~Urilpf';
+  // Client Key (Digunakan untuk inisialisasi pembayaran frontend/Snap)
   static const String midtransClientKey = 'SB-Mid-client-DSuywWCiN0pxVMZKepEY2_UW';
   static String get midtransSnapUrl => midtransIsProduction
       ? 'https://app.midtrans.com/snap/v1/transactions'

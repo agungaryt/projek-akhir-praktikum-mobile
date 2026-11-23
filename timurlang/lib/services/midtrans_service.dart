@@ -19,13 +19,33 @@ class MidtransService {
   static final MidtransService instance = MidtransService._internal();
   MidtransService._internal();
 
+  /// Mengecek apakah Midtrans Server Key sudah terkonfigurasi
   bool get isConfigured =>
       AppConstants.midtransServerKey.isNotEmpty &&
       AppConstants.midtransServerKey != 'SB-Mid-server-YOUR_SERVER_KEY_HERE';
 
+  // ==========================================================================
+  // 🔑 [LOGIKA MENGAMBIL & MENGGUNAKAN API KEY (SERVER KEY) MIDTRANS]
+  // --------------------------------------------------------------------------
+  // 1. CARA MENGAMBIL DARI DASHBOARD MIDTRANS:
+  //    - Login ke https://dashboard.midtrans.com/
+  //    - Masuk ke menu 'Settings' -> 'Access Keys'
+  //    - Salin 'Server Key' (Contoh Sandbox: 'SB-Mid-server-xxxx')
+  //    - Tempelkan ke 'AppConstants.midtransServerKey' di lib/config/constants.dart
+  //
+  // 2. LOGIKA CODINGAN MENGOLAH API KEY (BASIC AUTHENTICATION):
+  //    - Standar keamanan REST API Midtrans menggunakan HTTP Basic Authentication.
+  //    - Username = Server Key, Password = kosong.
+  //    - Format string yang dibutuhkan adalah: "$serverKey:" (dengan titik dua di ujung).
+  //    - String tersebut di-encode ke format Base64: base64Encode(utf8.encode('$serverKey:'))
+  //    - Nilai dikirim melalui Header HTTP: 'Authorization': 'Basic <hasil_base64>'
+  // ==========================================================================
   String _getAuthHeader() {
+    // [1] Ambil Server Key dari AppConstants
     final serverKey = AppConstants.midtransServerKey;
+    // [2] Format menjadi "serverKey:" dan encode ke Base64
     final encodedKey = base64Encode(utf8.encode('$serverKey:'));
+    // [3] Kembalikan header Authorization Basic
     return 'Basic $encodedKey';
   }
 

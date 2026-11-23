@@ -57,7 +57,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      // ============================================================================
+      // 🎨 [1. GANTI WARNA BACKGROUND HALAMAN BERANDA / HOME DASHBOARD]
+      // 👉 Ganti `AppTheme.background` (Contoh: Colors.white, Colors.grey.shade100)
+      // ============================================================================
+      backgroundColor: AppTheme.background, // 👈 UBAH WARNA BACKGROUND BERANDA
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: _buildAuraBottomBar(),
       floatingActionButton: null,
@@ -72,9 +76,13 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         height: 66,
         decoration: BoxDecoration(
-          color: AppTheme.surface.withValues(alpha: 0.96),
+          // ========================================================================
+          // 🎨 [2. GANTI WARNA BACKGROUND BOTTOM NAVIGATION BAR]
+          // 👉 Ganti `AppTheme.surface` (Contoh: Colors.white, Colors.black, Colors.blueGrey)
+          // ========================================================================
+          color: AppTheme.surface.withValues(alpha: 0.96), // 👈 UBAH WARNA BOTTOM BAR DI SINI
           borderRadius: BorderRadius.circular(9999),
-          border: Border.all(color: AppTheme.border, width: 1),
+          border: Border.all(color: AppTheme.border, width: 1), // 👈 BORDER BOTTOM BAR
           boxShadow: [
             BoxShadow(
               color: AppTheme.textPrimary.withValues(alpha: 0.04),
@@ -144,11 +152,16 @@ class _HomeScreenState extends State<HomeScreen> {
             customIcon ??
                 Icon(
                   isSelected ? activeIcon : icon,
+                  // ================================================================
+                  // 🎨 [3. GANTI WARNA IKON BOTTOM NAVIGATION BAR DI SINI]
+                  // 👉 `isSelected ? AppTheme.primary` = Warna saat tab AKTIF (Contoh: Colors.blue)
+                  // 👉 `: AppTheme.textSecondary`       = Warna saat tab TIDAK AKTIF (Abu-abu)
+                  // ================================================================
                   color: isLogout
                       ? AppTheme.error
                       : (isSelected
-                            ? AppTheme.primary
-                            : AppTheme.textSecondary),
+                            ? AppTheme.primary // 👈 UBAH WARNA IKON TAB AKTIF DI SINI
+                            : AppTheme.textSecondary), // 👈 UBAH WARNA IKON TAB TIDAK AKTIF
                   size: 22,
                 ),
             if (!iconOnly) ...[
@@ -158,11 +171,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 10.5,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  // ==============================================================
+                  // 🎨 [4. GANTI WARNA TEKS LABEL BOTTOM NAVIGATION BAR]
+                  // ==============================================================
                   color: isLogout
                       ? AppTheme.error
                       : (isSelected
-                            ? AppTheme.primary
-                            : AppTheme.textSecondary),
+                            ? AppTheme.primary // 👈 UBAH WARNA LABEL TAB AKTIF
+                            : AppTheme.textSecondary), // 👈 UBAH WARNA LABEL TAB TIDAK AKTIF
                 ),
               ),
             ],

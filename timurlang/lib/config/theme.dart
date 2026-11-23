@@ -6,22 +6,77 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// ============================================================================
+// 🎨 PANDUAN PENGUJIAN WARNA GLOBAL (UNTUK DEMO & PRESENTASI DOSEN/PENGUJI)
+// ----------------------------------------------------------------------------
+// Jika penguji meminta: "Coba ganti warna tema / background / tombol aplikasi":
+//
+// 1. Ganti WARNA UTAMA (Primary):
+//    Ubah `primary = Color(0xFF36533D);` di bawah menjadi:
+//    - Biru:   Color(0xFF1E88E5) atau Colors.blue
+//    - Merah:  Color(0xFFE53935) atau Colors.red
+//    - Oranye: Color(0xFFFB8C00) atau Colors.orange
+//    - Ungu:   Color(0xFF8E24AA) atau Colors.purple
+//
+// 2. Ganti WARNA BACKGROUND APLIKASI:
+//    Ubah `background = Color(0xFFF3F6F2);` di bawah menjadi:
+//    - Putih Bersih: Colors.white atau Color(0xFFFFFFFF)
+//    - Abu-abu Muda: Color(0xFFF5F5F5)
+//    - Gelap / Hitam: Color(0xFF121212)
+//
+// 3. Ganti WARNA KARTU / CARD CONTAINER:
+//    Ubah `surface = Color(0xFFFFFFFF);` di bawah (Contoh: Color(0xFFE8F5E9) untuk hijau muda).
+// ============================================================================
+
 class AppTheme {
-  // ── Aura Travel Design System Colors ──
+  // ── 🎨 PALET WARNA UTAMA AURA TRAVEL (GANTI DI SINI UNTUK PERUBAHAN GLOBAL) ──
+
+  /// 🟢 WARNA UTAMA APLIKASI (Tombol, Ikon Aktif, Header, Aksen Hijau Pinus)
+  /// 👉 Ganti warna ini jika dosen minta "Ganti warna tema utama":
   static const Color primary = Color(0xFF36533D);
+
+  /// 🟢 WARNA HOVER / TEKANAN TOMBOL UTAMA
   static const Color primaryHover = Color(0xFF29402F);
+
+  /// 🟢 WARNA HIJAU SANGAT MUDA / BACKGROUND HIGHLIGHT & ICON CONTAINER
   static const Color primarySubtle = Color(0xFFEBF1EA);
+
+  /// ⚪ WARNA TEKS DI ATAS WARNA UTAMA (Putih)
   static const Color onPrimary = Color(0xFFFFFFFF);
+
+  /// 🌿 WARNA SEKUNDER (Gradien Tombol, Aksen Tambahan)
   static const Color secondary = Color(0xFF557A5E);
+
+  /// 🏔️ WARNA BACKGROUND SELURUH LAYAR / HALAMAN APLIKASI
+  /// 👉 Ganti warna ini jika dosen minta "Ganti warna background aplikasi":
   static const Color background = Color(0xFFF3F6F2);
+
+  /// 📄 WARNA BACKGROUND KARTU / CONTAINER / FORM CARD (Putih Kartu)
+  /// 👉 Ganti warna ini jika dosen minta "Ganti warna kartu/card":
   static const Color surface = Color(0xFFFFFFFF);
+
+  /// 📄 WARNA PERMUKAAN HALUS (Subtle Surface)
   static const Color surfaceSubtle = Color(0xFFFAFCF9);
+
+  /// ⬛ WARNA TEKS UTAMA (Judul, Header, Teks Tebal Hitam Kehijauan)
   static const Color textPrimary = Color(0xFF17241B);
+
+  /// 🔘 WARNA TEKS KEDUA (Subjudul, Deskripsi, Hint, Placeholder)
   static const Color textSecondary = Color(0xFF637367);
+
+  /// 🔲 WARNA GARIS TEPI / BORDER KARTU & KOLOM INPUT
   static const Color border = Color(0xFFE0E7DF);
+
+  /// 🔲 WARNA BORDER SAAT KOLOM INPUT DI-KLIK / FOKUS
   static const Color borderFocus = Color(0xFF36533D);
+
+  /// ✅ WARNA STATUS SUKSES (Badge Jalur Buka, Izin Disetujui)
   static const Color success = Color(0xFF2E7D32);
+
+  /// ⚠️ WARNA PERINGATAN / AKUT (Badge Perhatian, Cuaca Ekstrem)
   static const Color warning = Color(0xFFD97706);
+
+  /// 🔴 WARNA ERROR / BAHAYA (Badge Jalur Tutup, Tombol Keluar, Pembatalan)
   static const Color error = Color(0xFFDC2626);
   static const Color accent = warning;
 
@@ -231,7 +286,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: border, width: 1),
@@ -272,16 +330,12 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        shape: const StadiumBorder(
-          side: BorderSide(color: border, width: 1),
-        ),
+        shape: const StadiumBorder(side: BorderSide(color: border, width: 1)),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: textPrimary,
         contentTextStyle: GoogleFonts.plusJakartaSans(color: onPrimary),
-        shape: RoundedRectangleBorder(
-          borderRadius: roundedMd,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: roundedMd),
         behavior: SnackBarBehavior.floating,
       ),
       dialogTheme: DialogThemeData(
@@ -301,10 +355,7 @@ class AppTheme {
         foregroundColor: onPrimary,
         elevation: 2,
       ),
-      dividerTheme: const DividerThemeData(
-        color: border,
-        thickness: 1,
-      ),
+      dividerTheme: const DividerThemeData(color: border, thickness: 1),
     );
   }
 

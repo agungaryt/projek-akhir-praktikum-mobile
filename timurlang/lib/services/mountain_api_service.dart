@@ -8,6 +8,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform, debugPrint;
 import 'package:http/http.dart' as http;
+import '../config/constants.dart';
 import '../models/mountain.dart';
 import 'database_service.dart';
 
@@ -50,9 +51,25 @@ class MountainApiService {
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
 
+      // ======================================================================
+      // 🔑 [LOGIKA MENGAMBIL & MENYISIPKAN API KEY KE REQUEST HEADER]
+      // ----------------------------------------------------------------------
+      // 1. Logika Ambil Key : Diambil dari AppConstants.mountainApiKey
+      // 2. Logika Kirim Key : Dimasukkan ke dalam HTTP Headers 'x-api-key'
+      // 3. Sesuai Modul V (Hal 9): "API key biasanya dikirim melalui header request
+      //    sebagai token autentikasi khusus".
+      // ======================================================================
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'x-api-key': AppConstants.mountainApiKey, // 🔑 API Key disematkan di sini
+      };
+
       debugPrint('📡 Fetching Mountains from API: $uri');
+      debugPrint('🔑 Using API Key: ${AppConstants.mountainApiKey}');
+
       final response = await http
-          .get(uri)
+          .get(uri, headers: headers)
           .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
@@ -82,7 +99,16 @@ class MountainApiService {
   Future<Mountain?> fetchMountainById(String id) async {
     try {
       final uri = Uri.parse('$_baseUrl/mountains/$id');
-      final response = await http.get(uri).timeout(const Duration(seconds: 4));
+      // 🔑 Sisipkan API Key ke header saat request detail gunung
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'x-api-key': AppConstants.mountainApiKey,
+      };
+
+      final response = await http
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);

@@ -356,7 +356,8 @@ class _MountainDetailScreenState extends State<MountainDetailScreen> {
                                 arguments: m,
                               ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
+                        // 🎨 [GANTI WARNA TOMBOL BOOKING SIMAKSI DI SINI]:
+                        backgroundColor: AppTheme.primary, // 👈 UBAH WARNA TOMBOL BOOKING (Contoh: Colors.blue, Colors.green)
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),

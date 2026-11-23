@@ -19,6 +19,10 @@ class AuthService {
   static final AuthService instance = AuthService._internal();
   AuthService._internal();
 
+  // --------------------------------------------------------------------------
+  // 🔌 CARA MENGHUBUNGKAN KE DATABASE LOKAL (SQLITE):
+  // Mengambil singleton instance DatabaseService untuk operasi akun pada tabel 'users'
+  // --------------------------------------------------------------------------
   final _db = DatabaseService.instance;
   User? _currentUser;
 
@@ -31,6 +35,7 @@ class AuthService {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString(AppConstants.userIdKey);
       if (userId != null && userId.isNotEmpty) {
+        // [READ]: Membaca data user dari SQLite berdasarkan ID sesi tersimpan
         final user = await _db.getUserById(userId);
         if (user != null) {
           _currentUser = user;
@@ -44,13 +49,14 @@ class AuthService {
     return null;
   }
 
-  /// Register pengguna baru
+  /// [CREATE]: Register pengguna baru dan simpan ke SQLite lokal
   Future<({bool success, String message})> register({
     required String namaLengkap,
     required String email,
     required String password,
   }) async {
     try {
+      // [READ]: Cek apakah email sudah terdaftar di SQLite
       final existing = await _db.getUserByEmail(email);
       if (existing != null) {
         return (success: false, message: 'Email sudah terdaftar.');
@@ -69,6 +75,7 @@ class AuthService {
         updatedAt: now,
       );
 
+      // [INSERT]: Menyimpan data akun pendaki ke tabel 'users' di SQLite
       await _db.insertUser(user);
       _currentUser = user;
 
@@ -83,13 +90,14 @@ class AuthService {
     }
   }
 
-  /// Login pengguna
+  /// [READ]: Login pengguna dengan memverifikasi data di SQLite
   Future<({bool success, String message})> login({
     required String email,
     required String password,
     bool rememberMe = true,
   }) async {
     try {
+      // [READ]: Query akun user berdasarkan email dari SQLite
       final user = await _db.getUserByEmail(email);
       if (user == null) {
         return (success: false, message: 'Email atau password salah.');
