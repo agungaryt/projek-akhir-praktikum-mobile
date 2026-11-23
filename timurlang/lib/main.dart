@@ -21,7 +21,7 @@ void main() async {
     debugPrint('⚠️ Error init locale: $e');
   }
 
-  // Inisialisasi database factory untuk web platform
+  // Inisialisasi database factory untuk web platform........
   if (kIsWeb) {
     try {
       DatabaseService.initForWeb();
